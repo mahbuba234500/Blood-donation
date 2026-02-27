@@ -2,17 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ProfileUpdateRequest;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Redirect;
-use Illuminate\View\View;
-
-use App\Models\Division;
+use App\Models\CityCorporation;
 use App\Models\District;
-use App\Models\Area;
+use App\Models\Division;
 use App\Models\DonorProfile;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 
 class ProfileController extends Controller
@@ -21,15 +16,13 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        if($this->isProfileComplete($user)) {
+        if ($this->isProfileComplete($user)) {
             return redirect()->route('dashboard');
         }
 
-        $divisions = Division::orderBy('name')->get(['id','name']);
+        $divisions = Division::orderBy('name')->get(['id', 'name']);
 
         return view('profile.complete', compact('user', 'divisions'));
-
-
     }
 
     public function completeStore(Request $request)
@@ -37,67 +30,143 @@ class ProfileController extends Controller
         $user = $request->user();
 
         $validated = $request->validate([
-            'phone' => ['required', 'string', 'max:11', 'unique:users,phone', $user->id],
-            'blood_group' => ['required', 'in:A+,A-,B+,B-,O+,O-,AB+,AB-'],
+            'phone' => [
+                'required',
+                'string',
+                'max:11',
+                Rule::unique('users', 'phone')->ignore($user->id),
+            ],
+            'blood_group' => ['required', Rule::in(['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'])],
 
             'division_id' => ['required', 'exists:divisions,id'],
             'district_id' => ['required', 'exists:districts,id'],
-            'area_id' => ['required', 'exists:areas,id'],
 
-            'address_line' => ['nullable', 'string', 'max:255'],
+            // Normal flow:
+            'upazilla_id' => ['nullable', 'exists:upazillas,id'],
+
+            // Dhaka city flow:
+            'city_corporation_id' => ['nullable', 'exists:city_corporations,id'],
+            'city_area_id'        => ['nullable', 'exists:city_areas,id'],
+
+            'address_line'    => ['nullable', 'string', 'max:255'],
             'medical_history' => ['nullable', 'string'],
-            'become_donor' => ['nullable', 'boolean'],
-            'last_donate_date' => ['required', 'date'],
 
+            'become_donor' => ['nullable', 'boolean'],
+            'last_donate_date' => ['nullable', 'date', 'required_if:become_donor,1'],
         ]);
 
-        $user->phone = $validated['phone'];
-        $user->blood_group = $validated['blood_group'];
-        $user->division_id = $validated['division_id'];
-        $user->district_id = $validated['district_id'];
-        $user->area_id = $validated['area_id'];
-        $user->address_line = $validated['address_line'] ?? null;
-        $user->medical_history = $validated['medical_history'] ?? null;
+        // Enforce one of the two location paths
+        $district = District::find($validated['district_id']);
+
+        $isDhakaDistrict = $district && $district->name === 'Dhaka';
+
+        // Your form should send a flag like: location_mode = 'city' or 'upazila'
+        $locationMode = $request->input('location_mode'); // 'city' | 'upazila' | null
+
+        if ($isDhakaDistrict && $locationMode === 'city') {
+            if (empty($validated['city_corporation_id']) || empty($validated['city_area_id'])) {
+                return back()->withErrors([
+                    'city_area_id' => 'City Area is required for City Corporation.',
+                ])->withInput();
+            }
+
+            // Clear upazila to avoid mixed data
+            $validated['upazilla_id'] = null;
+        } else {
+            if (empty($validated['upazilla_id'])) {
+                return back()->withErrors([
+                    'upazilla_id' => 'Upazila/Thana is required.',
+                ])->withInput();
+            }
+
+            // Clear city fields
+            $validated['city_corporation_id'] = null;
+            $validated['city_area_id'] = null;
+        }
+
+        $user->fill([
+            'phone' => $validated['phone'],
+            'blood_group' => $validated['blood_group'],
+            'division_id' => $validated['division_id'],
+            'district_id' => $validated['district_id'],
+
+            'upazilla_id' => $validated['upazilla_id'],
+            'city_corporation_id' => $validated['city_corporation_id'],
+            'city_area_id' => $validated['city_area_id'],
+
+            'address_line' => $validated['address_line'] ?? null,
+            'medical_history' => $validated['medical_history'] ?? null,
+        ]);
+
         $user->save();
 
         $wantsDonor = (bool) ($validated['become_donor'] ?? false);
 
-        if($wantsDonor) {
+        if ($wantsDonor) {
             $donor = DonorProfile::firstOrNew(['user_id' => $user->id]);
+
             $donor->is_available = true;
             $donor->last_donate_date = $validated['last_donate_date'] ?? null;
-            
-            if(!empty($donor->last_donate_date)) {
-                $donor->next_eligible_date = Carbon::parse($donor->last_donate_date)->addDays(90)->toDateString();
+
+            if (!empty($donor->last_donate_date)) {
+                $donor->next_eligible_date = Carbon::parse($donor->last_donate_date)
+                    ->addDays(90)
+                    ->toDateString();
+            } else {
+                $donor->next_eligible_date = null;
             }
 
             $donor->save();
         }
 
-        return redirect()->route('dashboard')->with('status', 'Profile Completed Successfully!');
-
+        return redirect()
+            ->route('dashboard')
+            ->with('status', 'Profile Completed Successfully!');
     }
 
+
+    // Districts by division (used by your division->district dropdown)
     public function districtsByDivision(Division $division)
     {
+        $district =  District::where('division_id', $division->id)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return response()->json($district);
+    }
+
+
+
+    // Upazillas by district (if you need it)
+    public function upazillasByDistrict(District $district)
+    {
+        return response()->json($district->upazillas()
+            ->orderBy('name')
+            ->get(['id', 'district_id', 'name']));
+    }
+
+    // Dhaka city corporations
+    public function dhakaCityCorporation()
+    {
+        $dhaka = District::where('name', 'Dhaka')->firstOrFail();
+
+        return response()->json(CityCorporation::where('district_id', $dhaka->id)
+            ->orderBy('name')
+            ->get(['id', 'district_id', 'name']));
+    }
+
+    public function areasByCityCorporation(CityCorporation $cityCorporation)
+    {
         return response()->json(
-            District::where('division_id', $division->id)
-                                ->orderBy('name')
-                                ->get(['id', 'name'])
+            $cityCorporation->cityareas()
+                ->orderBy('name')
+                ->get(['id', 'city_corporation_id', 'name'])
         );
     }
 
-    public function areasByDistrict(District $district) 
+    private function isProfileComplete($user): bool
     {
-        return response()->json(
-            Area::where('district_id',$district->id)
-                        ->orderBy('name')
-                        ->get(['id', 'name'])
-        );
-    }
-
-    public function isProfileComplete($user)
-    {
-        return !empty($user->blood_group) && !empty($user->area_id);
+        return !empty($user->blood_group) && (
+            !empty($user->upazilla_id) || !empty($user->city_area_id));
     }
 }

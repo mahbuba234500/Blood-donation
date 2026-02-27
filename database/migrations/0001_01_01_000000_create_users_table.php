@@ -44,7 +44,17 @@ return new class extends Migration {
                 ->constrained()
                 ->nullOnDelete();
             $table
-                ->foreignId("area_id")
+                ->foreignId('upazilla_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+            $table
+                ->foreignId('city_corporation_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+            $table
+                ->foreignId('city_area_id')
                 ->nullable()
                 ->constrained()
                 ->nullOnDelete();
@@ -60,7 +70,7 @@ return new class extends Migration {
             $table->timestamps();
 
             $table->index(["blood_group"]);
-            $table->index(["division_id", "district_id", "area_id"]);
+            $table->index(["division_id", "district_id", ]);
         });
 
         Schema::create("password_reset_tokens", function (Blueprint $table) {

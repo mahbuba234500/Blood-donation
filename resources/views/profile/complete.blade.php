@@ -1,163 +1,328 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Complete Your Profile
-        </h2>
-    </x-slot>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Complete Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
 
-    <div class="py-6">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white shadow-sm sm:rounded-lg p-6"
-                 x-data="profileForm()">
+<div class="max-w-4xl mx-auto p-6">
+    <div class="bg-white rounded shadow p-6">
+        <h1 class="text-2xl font-bold mb-6">Complete Your Profile</h1>
 
-                <form method="POST" action="{{ route('profile.complete.store') }}" class="space-y-4">
-                    @csrf
-
-                    <!-- Phone -->
-                    <div>
-                        <x-input-label for="phone" value="Phone" />
-                        <x-text-input id="phone" name="phone" type="text" class="mt-1 block w-full"
-                                      value="{{ old('phone', $user->phone) }}" required />
-                        <x-input-error :messages="$errors->get('phone')" class="mt-2" />
-                    </div>
-
-                    <!-- Blood Group -->
-                    <div>
-                        <x-input-label for="blood_group" value="Blood Group" />
-                        <select id="blood_group" name="blood_group" class="mt-1 block w-full border-gray-300 rounded-md" required>
-                            <option value="">Select</option>
-                            @foreach(['A+','A-','B+','B-','O+','O-','AB+','AB-'] as $bg)
-                                <option value="{{ $bg }}" @selected(old('blood_group', $user->blood_group) === $bg)>{{ $bg }}</option>
-                            @endforeach
-                        </select>
-                        <x-input-error :messages="$errors->get('blood_group')" class="mt-2" />
-                    </div>
-
-                    <!-- Division -->
-                    <div>
-                        <x-input-label for="division_id" value="Division" />
-                        <select id="division_id" name="division_id" class="mt-1 block w-full border-gray-300 rounded-md"
-                                x-model="divisionId" @change="loadDistricts()" required>
-                            <option value="">Select Division</option>
-                            @foreach($divisions as $d)
-                                <option value="{{ $d->id }}">{{ $d->name }}</option>
-                            @endforeach
-                        </select>
-                        <x-input-error :messages="$errors->get('division_id')" class="mt-2" />
-                    </div>
-
-                    <!-- District -->
-                    <div>
-                        <x-input-label for="district_id" value="District/City" />
-                        <select id="district_id" name="district_id" class="mt-1 block w-full border-gray-300 rounded-md"
-                                x-model="districtId" @change="loadAreas()" :disabled="districts.length===0" required>
-                            <option value="">Select District</option>
-                            <template x-for="dist in districts" :key="dist.id">
-                                <option :value="dist.id" x-text="dist.name"></option>
-                            </template>
-                        </select>
-                        <x-input-error :messages="$errors->get('district_id')" class="mt-2" />
-                    </div>
-
-                    <!-- Area -->
-                    <div>
-                        <x-input-label for="area_id" value="Area" />
-                        <select id="area_id" name="area_id" class="mt-1 block w-full border-gray-300 rounded-md"
-                                x-model="areaId" :disabled="areas.length===0" required>
-                            <option value="">Select Area</option>
-                            <template x-for="a in areas" :key="a.id">
-                                <option :value="a.id" x-text="a.name"></option>
-                            </template>
-                        </select>
-                        <x-input-error :messages="$errors->get('area_id')" class="mt-2" />
-                    </div>
-
-                    <!-- Address Line -->
-                    <div>
-                        <x-input-label for="address_line" value="Address Line (Optional)" />
-                        <x-text-input id="address_line" name="address_line" type="text" class="mt-1 block w-full"
-                                      value="{{ old('address_line', $user->address_line) }}" />
-                        <x-input-error :messages="$errors->get('address_line')" class="mt-2" />
-                    </div>
-
-                    <!-- Medical History -->
-                    <div>
-                        <x-input-label for="medical_history" value="Medical History (Optional)" />
-                        <textarea id="medical_history" name="medical_history"
-                                  class="mt-1 block w-full border-gray-300 rounded-md"
-                                  rows="4">{{ old('medical_history', $user->medical_history) }}</textarea>
-                        <x-input-error :messages="$errors->get('medical_history')" class="mt-2" />
-                    </div>
-
-                    <!-- Become Donor Toggle -->
-                    <div class="border rounded-md p-4">
-                        <label class="flex items-center gap-2">
-                            <input type="checkbox" name="become_donor" value="1" x-model="becomeDonor">
-                            <span class="font-medium">I want to become a donor</span>
-                        </label>
-
-                        <div class="mt-3" x-show="becomeDonor" x-cloak>
-                            <x-input-label for="last_donate_date" value="Last Donate Date (Optional)" />
-                            <x-text-input id="last_donate_date" name="last_donate_date" type="date" class="mt-1 block w-full"
-                                          value="{{ old('last_donate_date') }}" />
-                            <p class="text-sm text-gray-500 mt-1">
-                                If you donated recently, the system can hide you until eligible.
-                            </p>
-                            <x-input-error :messages="$errors->get('last_donate_date')" class="mt-2" />
-                        </div>
-                    </div>
-
-                    <div class="pt-2">
-                        <x-primary-button>Save Profile</x-primary-button>
-                    </div>
-                </form>
+        @if ($errors->any())
+            <div class="mb-4 rounded border border-red-200 bg-red-50 p-3 text-red-800">
+                <ul class="list-disc pl-5">
+                    @foreach($errors->all() as $e)
+                        <li>{{ $e }}</li>
+                    @endforeach
+                </ul>
             </div>
-        </div>
+        @endif
+
+        <form method="POST" action="{{ route('profile.complete.store') }}" class="space-y-5">
+            @csrf
+
+            <input type="hidden" name="location_mode" id="location_mode" value="{{ old('location_mode','upazila') }}">
+
+            <div>
+                <label class="block text-sm font-medium">Phone</label>
+                <input name="phone" value="{{ old('phone', $user->phone) }}"
+                       class="mt-1 w-full border rounded p-2" placeholder="01XXXXXXXXX" required>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium">Blood Group</label>
+                <select name="blood_group" class="mt-1 w-full border rounded p-2" required>
+                    <option value="">Select Blood Group</option>
+                    @php $groups=['A+','A-','B+','B-','O+','O-','AB+','AB-']; $sel=old('blood_group',$user->blood_group); @endphp
+                    @foreach($groups as $g)
+                        <option value="{{ $g }}" @selected($sel===$g)>{{ $g }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium">Division</label>
+                <select id="division" name="division_id" class="mt-1 w-full border rounded p-2" required>
+                    <option value="">Select Division</option>
+                    @foreach($divisions as $d)
+                        <option value="{{ $d->id }}" @selected(old('division_id')==$d->id)>{{ $d->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium">District</label>
+                <select id="district" name="district_id" class="mt-1 w-full border rounded p-2" required>
+                    <option value="">Select District</option>
+                </select>
+            </div>
+
+            {{-- Dhaka toggle --}}
+            <div id="dhakaModeWrapper" class="hidden">
+                <label class="block text-sm font-medium">Dhaka Location Type</label>
+                <div class="mt-2 flex gap-4">
+                    <label class="inline-flex items-center gap-2">
+                        <input type="radio" name="dhaka_mode_radio" value="upazila" checked>
+                        <span>Thana/Upazila</span>
+                    </label>
+                    <label class="inline-flex items-center gap-2">
+                        <input type="radio" name="dhaka_mode_radio" value="city">
+                        <span>City Corporation</span>
+                    </label>
+                </div>
+            </div>
+
+            <div id="upazilaWrapper">
+                <label class="block text-sm font-medium">Upazila / Thana</label>
+                <select id="upazila" name="upazilla_id" class="mt-1 w-full border rounded p-2">
+                    <option value="">Select Upazila</option>
+                </select>
+                @error('upazilla_id') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+            </div>
+
+            <div id="corpWrapper" class="hidden">
+                <label class="block text-sm font-medium">City Corporation</label>
+                <select id="city_corporation" name="city_corporation_id" class="mt-1 w-full border rounded p-2">
+                    <option value="">Select City Corporation</option>
+                </select>
+            </div>
+
+            <div id="cityAreaWrapper" class="hidden">
+                <label class="block text-sm font-medium">City Area</label>
+                <select id="city_area" name="city_area_id" class="mt-1 w-full border rounded p-2">
+                    <option value="">Select City Area</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium">Address (Optional)</label>
+                <input name="address_line" value="{{ old('address_line', $user->address_line) }}"
+                       class="mt-1 w-full border rounded p-2" placeholder="House/road, etc.">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium">Medical History (Optional)</label>
+                <textarea name="medical_history" class="mt-1 w-full border rounded p-2" rows="3">{{ old('medical_history', $user->medical_history) }}</textarea>
+            </div>
+
+            <div class="border rounded p-4">
+                <label class="inline-flex items-center gap-2">
+                    <input type="checkbox" id="become_donor" name="become_donor" value="1" @checked(old('become_donor'))>
+                    <span class="font-medium">I want to be a donor</span>
+                </label>
+
+                <div id="donorDateWrapper" class="hidden mt-3">
+                    <label class="block text-sm font-medium">Last Donation Date</label>
+                    <input type="date" name="last_donate_date" value="{{ old('last_donate_date') }}"
+                           class="mt-1 w-full border rounded p-2">
+                </div>
+            </div>
+
+            <button class="px-4 py-2 bg-indigo-600 text-white rounded">Save Profile</button>
+        </form>
     </div>
+</div>
 
-    <script>
-        function profileForm() {
-            return {
-                divisionId: "{{ old('division_id', $user->division_id) }}",
-                districtId: "{{ old('district_id', $user->district_id) }}",
-                areaId: "{{ old('area_id', $user->area_id) }}",
-                districts: [],
-                areas: [],
-                becomeDonor: false,
+<script>
+(function () {
+    const divisionEl = document.getElementById('division');
+    const districtEl = document.getElementById('district');
+    const upazilaEl = document.getElementById('upazila');
 
-                async loadDistricts() {
-                    this.districts = [];
-                    this.areas = [];
-                    this.districtId = "";
-                    this.areaId = "";
+    const dhakaModeWrapper = document.getElementById('dhakaModeWrapper');
+    const upazilaWrapper = document.getElementById('upazilaWrapper');
 
-                    if (!this.divisionId) return;
+    const corpWrapper = document.getElementById('corpWrapper');
+    const corpEl = document.getElementById('city_corporation');
 
-                    const res = await fetch(`/locations/divisions/${this.divisionId}/districts`);
-                    this.districts = await res.json();
-                },
+    const cityAreaWrapper = document.getElementById('cityAreaWrapper');
+    const cityAreaEl = document.getElementById('city_area');
 
-                async loadAreas() {
-                    this.areas = [];
-                    this.areaId = "";
+    const locationModeEl = document.getElementById('location_mode');
 
-                    if (!this.districtId) return;
+    const becomeDonorEl = document.getElementById('become_donor');
+    const donorDateWrapper = document.getElementById('donorDateWrapper');
 
-                    const res = await fetch(`/locations/districts/${this.districtId}/areas`);
-                    this.areas = await res.json();
-                },
+    function resetSelect(selectEl, placeholder) {
+        selectEl.innerHTML = '';
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = placeholder;
+        selectEl.appendChild(opt);
+    }
 
-                async init() {
-                    // If editing existing user (rare at completion stage), preload cascading selections
-                    if (this.divisionId) {
-                        await this.loadDistricts();
-                        if (this.districtId) {
-                            await this.loadAreas();
-                        }
-                    }
-                }
-            }
+    function setVisible(el, visible) {
+        el.classList.toggle('hidden', !visible);
+    }
+
+    async function loadDistricts(divisionId) {
+        resetSelect(districtEl, 'Select District');
+        resetSelect(upazilaEl, 'Select Upazila');
+
+        setVisible(dhakaModeWrapper, false);
+        setVisible(corpWrapper, false);
+        setVisible(cityAreaWrapper, false);
+        setVisible(upazilaWrapper, true);
+        locationModeEl.value = 'upazila';
+
+        if (!divisionId) return;
+
+        const res = await fetch(`/locations/divisions/${divisionId}/districts`);
+        const data = await res.json();
+        data.forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d.id;
+            opt.textContent = d.name;
+            districtEl.appendChild(opt);
+        });
+    }
+
+    async function loadUpazilas(districtId) {
+        resetSelect(upazilaEl, 'Select Upazila');
+        if (!districtId) return;
+
+        const res = await fetch(`/locations/districts/${districtId}/upazillas`);
+        const data = await res.json();
+        data.forEach(u => {
+            const opt = document.createElement('option');
+            opt.value = u.id;
+            opt.textContent = u.name;
+            upazilaEl.appendChild(opt);
+        });
+    }
+
+    async function loadDhakaCorps() {
+        resetSelect(corpEl, 'Select City Corporation');
+        resetSelect(cityAreaEl, 'Select City Area');
+
+        const res = await fetch(`/locations/dhaka/city-corporations`);
+        const corps = await res.json();
+
+        corps.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = c.name;
+            corpEl.appendChild(opt);
+        });
+    }
+
+    async function loadCityAreas(corpId) {
+        resetSelect(cityAreaEl, 'Select City Area');
+        if (!corpId) return;
+
+        const res = await fetch(`/locations/dhaka/city-corporations/${corpId}/areas`);
+        const areas = await res.json();
+
+        areas.forEach(a => {
+            const opt = document.createElement('option');
+            opt.value = a.id;
+            opt.textContent = a.name;
+            cityAreaEl.appendChild(opt);
+        });
+    }
+
+    function isDhakaDistrictSelected() {
+        const text = districtEl.options[districtEl.selectedIndex]?.textContent?.trim();
+        return text === 'Dhaka';
+    }
+
+    divisionEl.addEventListener('change', () => loadDistricts(divisionEl.value));
+
+    districtEl.addEventListener('change', async () => {
+        await loadUpazilas(districtEl.value);
+
+        const isDhaka = isDhakaDistrictSelected();
+        setVisible(dhakaModeWrapper, isDhaka);
+
+        if (!isDhaka) {
+            setVisible(upazilaWrapper, true);
+            setVisible(corpWrapper, false);
+            setVisible(cityAreaWrapper, false);
+            locationModeEl.value = 'upazila';
+            return;
         }
-        document.addEventListener('alpine:init', () => {});
-    </script>
-</x-app-layout>
+
+        // default upazila mode when Dhaka
+        locationModeEl.value = 'upazila';
+        document.querySelector('input[name="dhaka_mode_radio"][value="upazila"]').checked = true;
+        setVisible(upazilaWrapper, true);
+        setVisible(corpWrapper, false);
+        setVisible(cityAreaWrapper, false);
+    });
+
+    document.querySelectorAll('input[name="dhaka_mode_radio"]').forEach(r => {
+        r.addEventListener('change', async (e) => {
+            const mode = e.target.value;
+            locationModeEl.value = mode;
+
+            if (mode === 'city') {
+                setVisible(upazilaWrapper, false);
+                setVisible(corpWrapper, true);
+                setVisible(cityAreaWrapper, true);
+                await loadDhakaCorps();
+            } else {
+                setVisible(upazilaWrapper, true);
+                setVisible(corpWrapper, false);
+                setVisible(cityAreaWrapper, false);
+                resetSelect(corpEl, 'Select City Corporation');
+                resetSelect(cityAreaEl, 'Select City Area');
+            }
+        });
+    });
+
+    corpEl.addEventListener('change', () => loadCityAreas(corpEl.value));
+
+    function toggleDonorDate() {
+        setVisible(donorDateWrapper, becomeDonorEl.checked);
+    }
+    becomeDonorEl.addEventListener('change', toggleDonorDate);
+    toggleDonorDate();
+
+    // restore old values
+    const oldDivision = "{{ old('division_id') }}";
+    const oldDistrict = "{{ old('district_id') }}";
+    const oldUpazila = "{{ old('upazilla_id') }}";
+    const oldMode = "{{ old('location_mode','upazila') }}";
+    const oldCorp = "{{ old('city_corporation_id') }}";
+    const oldCityArea = "{{ old('city_area_id') }}";
+
+    (async function init() {
+        if (oldDivision) {
+            divisionEl.value = oldDivision;
+            await loadDistricts(oldDivision);
+        }
+        if (oldDistrict) {
+            districtEl.value = oldDistrict;
+            await loadUpazilas(oldDistrict);
+        }
+
+        const isDhaka = isDhakaDistrictSelected();
+        setVisible(dhakaModeWrapper, isDhaka);
+
+        if (isDhaka && oldMode === 'city') {
+            locationModeEl.value = 'city';
+            document.querySelector('input[name="dhaka_mode_radio"][value="city"]').checked = true;
+
+            setVisible(upazilaWrapper, false);
+            setVisible(corpWrapper, true);
+            setVisible(cityAreaWrapper, true);
+
+            await loadDhakaCorps();
+            if (oldCorp) {
+                corpEl.value = oldCorp;
+                await loadCityAreas(oldCorp);
+            }
+            if (oldCityArea) cityAreaEl.value = oldCityArea;
+        } else {
+            if (oldUpazila) upazilaEl.value = oldUpazila;
+        }
+    })();
+})();
+</script>
+
+</body>
+</html>
