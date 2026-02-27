@@ -23,9 +23,9 @@ $isOwner = auth()->check() && $r->requester_user_id === auth()->id();
             <div class="text-sm text-gray-600 mt-1">
                 Location:
                 @if ($r->cityArea)
-                 {{ $r->CityArea->id }} ,
+                 {{ $r->CityArea->name }} ,
                 @endif
-                @if($r->cityCorporation),
+                @if($r->cityCorporation)
                 {{ $r->cityCorporation->name }} ,
                 @endif
                 @if($r->upazilla)  {{ $r->upazilla->name }} , @endif

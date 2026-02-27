@@ -174,6 +174,18 @@
 </div>
 
 <script>
+    document.getElementById('requestForm').addEventListener('submit', function(e) {
+
+        console.log('location_mode:', locationModeEl.value);
+        console.log('upazilla_id:', upazilaEl.value);
+        console.log('city_corporation_id:', corpEl.value);
+        console.log('city_area_id:', cityAreaEl.value);
+
+        // allow submission after short delay
+        setTimeout(() => {
+            e.target.submit();
+        }, 100);
+    });
     (function() {
         const divisionEl = document.getElementById('division_id');
         const districtEl = document.getElementById('district_id');

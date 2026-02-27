@@ -26,6 +26,7 @@ class BloodRequest extends Model
         'district_id',
         'upazilla_id',
         'city_corporation_id',
+        'city_area_id',
 
         'hospital_name',
         'address_line',
