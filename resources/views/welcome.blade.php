@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,7 +13,7 @@
 
     <!-- Styles / Scripts -->
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     @endif
 </head>
 
@@ -31,25 +32,30 @@
             </a>
 
             <nav class="flex items-center gap-2">
+                <a href="{{ route('blood-requests.index') }}"
+                    class="inline-flex items-center rounded-xl px-4 py-2 text-sm font-medium border border-slate-200 hover:bg-slate-50
+          dark:border-slate-800 dark:hover:bg-slate-900">
+                    All Requests
+                </a>
                 @if (Route::has('login'))
-                    @auth
-                        <a href="{{ url('/dashboard') }}"
-                           class="inline-flex items-center rounded-xl px-4 py-2 text-sm font-medium bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white">
-                            Dashboard
-                        </a>
-                    @else
-                        <a href="{{ route('login') }}"
-                           class="inline-flex items-center rounded-xl px-4 py-2 text-sm font-medium border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900">
-                            Log in
-                        </a>
+                @auth
+                <a href="{{ url('/dashboard') }}"
+                    class="inline-flex items-center rounded-xl px-4 py-2 text-sm font-medium bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white">
+                    Dashboard
+                </a>
+                @else
+                <a href="{{ route('login') }}"
+                    class="inline-flex items-center rounded-xl px-4 py-2 text-sm font-medium border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900">
+                    Log in
+                </a>
 
-                        @if (Route::has('register'))
-                            <a href="{{ route('register') }}"
-                               class="inline-flex items-center rounded-xl px-4 py-2 text-sm font-medium bg-red-600 text-white hover:bg-red-700">
-                                Register
-                            </a>
-                        @endif
-                    @endauth
+                @if (Route::has('register'))
+                <a href="{{ route('register') }}"
+                    class="inline-flex items-center rounded-xl px-4 py-2 text-sm font-medium bg-red-600 text-white hover:bg-red-700">
+                    Register
+                </a>
+                @endif
+                @endauth
                 @endif
             </nav>
         </div>
@@ -76,13 +82,18 @@
 
                     <div class="mt-6 flex flex-col gap-3 sm:flex-row">
                         <a href="{{ route('register') }}"
-                           class="inline-flex justify-center rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-700">
+                            class="inline-flex justify-center rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-700">
                             Become a Donor
                         </a>
 
                         <a href="{{ Route::has('blood-requests.create') ? route('blood-requests.create') : (Route::has('login') ? route('login') : '#') }}"
-                           class="inline-flex justify-center rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900">
+                            class="inline-flex justify-center rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900">
                             Create Blood Request
+                        </a>
+                        <a href="{{ route('blood-requests.index') }}"
+                            class="inline-flex justify-center rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold
+          hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900">
+                            Browse All Requests
                         </a>
                     </div>
 
@@ -151,9 +162,9 @@
                         <div class="mt-6 flex flex-wrap gap-2">
                             @php($groups = ['A+','A-','B+','B-','O+','O-','AB+','AB-'])
                             @foreach($groups as $g)
-                                <span class="inline-flex items-center rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold dark:border-slate-800">
-                                    {{ $g }}
-                                </span>
+                            <span class="inline-flex items-center rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold dark:border-slate-800">
+                                {{ $g }}
+                            </span>
                             @endforeach
                         </div>
                     </div>
@@ -204,11 +215,11 @@
                     </div>
                     <div class="flex flex-col gap-3 sm:flex-row md:justify-end">
                         <a href="{{ route('register') }}"
-                           class="inline-flex justify-center rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-700 dark:bg-red-600 dark:text-white dark:hover:bg-red-700">
+                            class="inline-flex justify-center rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-700 dark:bg-red-600 dark:text-white dark:hover:bg-red-700">
                             Register as Donor
                         </a>
                         <a href="{{ Route::has('login') ? route('login') : '#' }}"
-                           class="inline-flex justify-center rounded-xl border border-white/30 px-5 py-3 text-sm font-semibold hover:bg-white/10 dark:border-slate-300 dark:hover:bg-slate-200">
+                            class="inline-flex justify-center rounded-xl border border-white/30 px-5 py-3 text-sm font-semibold hover:bg-white/10 dark:border-slate-300 dark:hover:bg-slate-200">
                             Log in
                         </a>
                     </div>
@@ -223,4 +234,5 @@
         </div>
     </footer>
 </body>
+
 </html>
