@@ -21,16 +21,18 @@ return new class extends Migration {
 
             $table->string("password");
 
-            $table->enum("blood_group", [
-                "A+",
-                "A-",
-                "B+",
-                "B-",
-                "O+",
-                "O-",
-                "AB+",
-                "AB-",
-            ])->nullable();
+            $table
+                ->enum("blood_group", [
+                    "A+",
+                    "A-",
+                    "B+",
+                    "B-",
+                    "O+",
+                    "O-",
+                    "AB+",
+                    "AB-",
+                ])
+                ->nullable();
             $table->text("medical_history")->nullable();
 
             $table
@@ -44,17 +46,17 @@ return new class extends Migration {
                 ->constrained()
                 ->nullOnDelete();
             $table
-                ->foreignId('upazilla_id')
+                ->foreignId("upazilla_id")
                 ->nullable()
                 ->constrained()
                 ->nullOnDelete();
             $table
-                ->foreignId('city_corporation_id')
+                ->foreignId("city_corporation_id")
                 ->nullable()
                 ->constrained()
                 ->nullOnDelete();
             $table
-                ->foreignId('city_area_id')
+                ->foreignId("city_area_id")
                 ->nullable()
                 ->constrained()
                 ->nullOnDelete();
@@ -70,7 +72,7 @@ return new class extends Migration {
             $table->timestamps();
 
             $table->index(["blood_group"]);
-            $table->index(["division_id", "district_id", ]);
+            $table->index(["division_id", "district_id"]);
         });
 
         Schema::create("password_reset_tokens", function (Blueprint $table) {
@@ -89,9 +91,7 @@ return new class extends Migration {
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
+    
     public function down(): void
     {
         Schema::dropIfExists("users");
