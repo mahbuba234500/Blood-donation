@@ -1,3 +1,26 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@layer base {
+  /* Light mode defaults */
+  input,
+  select,
+  textarea {
+    @apply bg-white text-slate-900 placeholder:text-slate-400;
+  }
+
+  /* Dark mode defaults */
+  .dark input,
+  .dark select,
+  .dark textarea {
+    @apply bg-slate-900 text-slate-100 placeholder:text-slate-400 border-slate-700;
+  }
+
+  /* Make dropdown options readable in some browsers */
+  option {
+    @apply text-slate-900;
+  }
+  .dark option {
+    @apply text-slate-100 bg-slate-900;
+  }
+}
