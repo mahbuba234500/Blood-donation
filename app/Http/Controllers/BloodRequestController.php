@@ -6,9 +6,11 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Models\Division;
 use App\Models\BloodRequest;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class BloodRequestController extends Controller
 {
+    use AuthorizesRequests;
     public function index()
     {
         $requests = BloodRequest::with(['division', 'district', 'upazilla'])
