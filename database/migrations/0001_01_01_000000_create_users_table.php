@@ -73,6 +73,10 @@ return new class extends Migration {
 
             $table->index(["blood_group"]);
             $table->index(["division_id", "district_id"]);
+            $table->index('upazilla_id');
+            $table->index('city_corporation_id');
+            $table->index('city_area_id');
+            $table->index(['role', 'is_blocked']);
         });
 
         Schema::create("password_reset_tokens", function (Blueprint $table) {

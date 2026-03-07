@@ -14,7 +14,7 @@ class CityCorporation extends Model
         return $this->belongsTo(District::class);
     }
 
-    public function cityareas()
+    public function cityAreas()
     {
         return $this->hasMany(CityArea::class);
     }

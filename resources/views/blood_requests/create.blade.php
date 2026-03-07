@@ -1,251 +1,284 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="py-8">
-    <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-        <div class="rounded-3xl border border-slate-200/70 bg-white shadow-sm p-6 sm:p-8">
+<div class="mx-auto max-w-4xl py-6 sm:py-8">
+    <div class="mb-8">
+        <div class="badge-soft">Request blood</div>
+        <h1 class="mt-4 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+            Create Blood Request
+        </h1>
+        <p class="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+            Share the details clearly so nearby donors can understand the urgency and respond more quickly.
+        </p>
+    </div>
 
-            <div class="flex items-start justify-between gap-4">
-                <div>
-                    <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900">
-                        Create Blood Request
-                    </h2>
-                    <p class="mt-1 text-sm text-slate-600">
-                        Fill in the details so donors can find and respond quickly.
-                    </p>
-                </div>
-
-                <div class="hidden sm:flex items-center gap-2">
-                    <span class="inline-flex items-center rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold text-red-700">
-                        Blood Donation
-                    </span>
-                </div>
-            </div>
-
-            @if ($errors->any())
-                <div class="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-red-800">
-                    <div class="font-semibold">Please fix the following:</div>
-                    <ul class="mt-2 list-disc pl-5 text-sm">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
-            <form method="POST" action="{{ route('blood-requests.store') }}" class="mt-6 space-y-6" id="requestForm">
-                @csrf
-
-                {{-- IMPORTANT: tells backend which location mode user selected --}}
-                <input type="hidden" name="location_mode" id="location_mode" value="{{ old('location_mode','upazila') }}">
-
-                {{-- Section: requester --}}
-                <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 sm:p-5">
-                    <h3 class="text-sm font-semibold text-slate-900">Requester</h3>
-
-                    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Requester Name</label>
-                            <input name="requester_name"
-                                   class="w-full rounded-2xl border-slate-200 focus:border-red-500 focus:ring-red-500/30"
-                                   value="{{ old('requester_name', auth()->user()->name ?? '') }}" required>
-                            @error('requester_name') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Requester Phone</label>
-                            <input name="requester_phone"
-                                   class="w-full rounded-2xl border-slate-200 focus:border-red-500 focus:ring-red-500/30"
-                                   value="{{ old('requester_phone', auth()->user()->phone ?? '') }}" required>
-                            @error('requester_phone') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Section: patient + blood --}}
-                <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
-                    <h3 class="text-sm font-semibold text-slate-900">Patient & Need</h3>
-
-                    <div class="mt-4">
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Patient Name</label>
-                        <input name="patient_name"
-                               class="w-full rounded-2xl border-slate-200 focus:border-red-500 focus:ring-red-500/30"
-                               value="{{ old('patient_name') }}" required>
-                        @error('patient_name') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                    </div>
-
-                    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Blood Group</label>
-                            <select name="blood_group"
-                                    class="w-full rounded-2xl border-slate-200 focus:border-red-500 focus:ring-red-500/30"
-                                    required>
-                                <option value="">Select</option>
-                                @foreach(['A+','A-','B+','B-','AB+','AB-','O+','O-'] as $bg)
-                                    <option value="{{ $bg }}" @selected(old('blood_group')===$bg)>{{ $bg }}</option>
-                                @endforeach
-                            </select>
-                            @error('blood_group') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div class="flex items-end">
-                            <label class="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-800">
-                                <input type="checkbox" name="is_emergency" value="1"
-                                       class="rounded border-red-300 text-red-600 focus:ring-red-500/40"
-                                       @checked(old('is_emergency'))>
-                                Emergency
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Needed Date</label>
-                            <input type="date" name="needed_date"
-                                   class="w-full rounded-2xl border-slate-200 focus:border-red-500 focus:ring-red-500/30"
-                                   value="{{ old('needed_date') }}" required>
-                            @error('needed_date') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Quantity (bags)</label>
-                            <input type="number" name="quantity_bags" min="1" max="20"
-                                   class="w-full rounded-2xl border-slate-200 focus:border-red-500 focus:ring-red-500/30"
-                                   value="{{ old('quantity_bags') }}">
-                            @error('quantity_bags') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Section: location --}}
-                <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-sm font-semibold text-slate-900">Location</h3>
-                        <span class="text-xs text-slate-500">Required for matching donors</span>
-                    </div>
-
-                    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Division</label>
-                            <select id="division_id" name="division_id"
-                                    class="w-full rounded-2xl border-slate-200 focus:border-red-500 focus:ring-red-500/30"
-                                    required>
-                                <option value="">Select</option>
-                                @foreach($divisions as $division)
-                                    <option value="{{ $division->id }}" @selected(old('division_id')==$division->id)>
-                                        {{ $division->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('division_id') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">District</label>
-                            <select id="district_id" name="district_id"
-                                    class="w-full rounded-2xl border-slate-200 focus:border-red-500 focus:ring-red-500/30"
-                                    required>
-                                <option value="">Select</option>
-                            </select>
-                            @error('district_id') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
-
-                    {{-- Dhaka toggle --}}
-                    <div id="dhakaModeWrapper" class="hidden mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                        <label class="block text-sm font-semibold text-slate-900">Dhaka Location Type</label>
-                        <p class="mt-1 text-xs text-slate-600">Choose how you want to select Dhaka location.</p>
-
-                        <div class="mt-3 flex flex-wrap gap-3">
-                            <label class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
-                                <input type="radio" name="dhaka_mode_radio" value="upazila" class="text-red-600 focus:ring-red-500/40" checked>
-                                <span>Thana/Upazila</span>
-                            </label>
-                            <label class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
-                                <input type="radio" name="dhaka_mode_radio" value="city" class="text-red-600 focus:ring-red-500/40">
-                                <span>City Corporation</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    {{-- Upazila --}}
-                    <div id="upazilaWrapper" class="mt-4">
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Upazila / Thana</label>
-                        <select id="upazila_id" name="upazilla_id"
-                                class="w-full rounded-2xl border-slate-200 focus:border-red-500 focus:ring-red-500/30">
-                            <option value="">Select Upazila</option>
-                        </select>
-                        @error('upazilla_id') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                    </div>
-
-                    {{-- City Corporation --}}
-                    <div id="corpWrapper" class="hidden mt-4">
-                        <label class="block text-sm font-medium text-slate-700 mb-1">City Corporation</label>
-                        <select id="city_corporation_id" name="city_corporation_id"
-                                class="w-full rounded-2xl border-slate-200 focus:border-red-500 focus:ring-red-500/30">
-                            <option value="">Select City Corporation</option>
-                        </select>
-                        @error('city_corporation_id') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                    </div>
-
-                    {{-- City Area --}}
-                    <div id="cityAreaWrapper" class="hidden mt-4">
-                        <label class="block text-sm font-medium text-slate-700 mb-1">City Area</label>
-                        <select id="city_area_id" name="city_area_id"
-                                class="w-full rounded-2xl border-slate-200 focus:border-red-500 focus:ring-red-500/30">
-                            <option value="">Select City Area</option>
-                        </select>
-                        @error('city_area_id') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                    </div>
-                </div>
-
-                {{-- Section: extra --}}
-                <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
-                    <h3 class="text-sm font-semibold text-slate-900">Additional Details</h3>
-
-                    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Hospital Name (optional)</label>
-                            <input name="hospital_name"
-                                   class="w-full rounded-2xl border-slate-200 focus:border-red-500 focus:ring-red-500/30"
-                                   value="{{ old('hospital_name') }}" placeholder="e.g. Dhaka Medical College">
-                            @error('hospital_name') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Address Line (optional)</label>
-                            <input name="address_line"
-                                   class="w-full rounded-2xl border-slate-200 focus:border-red-500 focus:ring-red-500/30"
-                                   value="{{ old('address_line') }}" placeholder="Ward/Gate/Road/House etc.">
-                            @error('address_line') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
-
-                    <div class="mt-4">
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Note (optional)</label>
-                        <textarea name="note"
-                                  class="w-full rounded-2xl border-slate-200 focus:border-red-500 focus:ring-red-500/30"
-                                  rows="3"
-                                  placeholder="Anything important...">{{ old('note') }}</textarea>
-                        @error('note') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                    </div>
-                </div>
-
-                {{-- Actions --}}
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 pt-2">
-                    <a href="{{ url()->previous() }}"
-                       class="inline-flex justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                        Cancel
-                    </a>
-
-                    <button id="submitBtn"
-                            class="inline-flex justify-center rounded-2xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/40">
-                        Create Request
-                    </button>
-                </div>
-
-            </form>
+    @if ($errors->any())
+        <div class="mb-6 rounded-[28px] border border-red-200 bg-red-50/90 p-5 text-red-800 shadow-sm">
+            <div class="text-sm font-semibold">Please fix the following issues</div>
+            <ul class="mt-3 list-disc space-y-1 pl-5 text-sm">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
         </div>
+    @endif
+
+    <div class="card-soft p-5 sm:p-7">
+        <form method="POST" action="{{ route('blood-requests.store') }}" class="space-y-6" id="requestForm">
+            @csrf
+
+            <input type="hidden" name="location_mode" id="location_mode" value="{{ old('location_mode','upazila') }}">
+
+            {{-- Requester --}}
+            <section class="rounded-[26px] border border-rose-100 bg-rose-50/50 p-5 sm:p-6">
+                <div class="flex items-center justify-between gap-3">
+                    <div>
+                        <h2 class="text-base font-semibold text-slate-900">Requester Information</h2>
+                        <p class="mt-1 text-sm text-slate-500">So donors know who to contact.</p>
+                    </div>
+                    <div class="hidden sm:block rounded-full bg-white px-3 py-1 text-xs font-semibold text-red-700 ring-1 ring-rose-100">
+                        Step 1
+                    </div>
+                </div>
+
+                <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">Requester Name</label>
+                        <input
+                            name="requester_name"
+                            value="{{ old('requester_name', auth()->user()->name ?? '') }}"
+                            required
+                            class="mt-2"
+                            placeholder="Full name">
+                        @error('requester_name') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">Requester Phone</label>
+                        <input
+                            name="requester_phone"
+                            value="{{ old('requester_phone', auth()->user()->phone ?? '') }}"
+                            required
+                            class="mt-2"
+                            placeholder="01XXXXXXXXX">
+                        @error('requester_phone') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+            </section>
+
+            {{-- Patient --}}
+            <section class="rounded-[26px] border border-slate-100 bg-white p-5 sm:p-6">
+                <div class="flex items-center justify-between gap-3">
+                    <div>
+                        <h2 class="text-base font-semibold text-slate-900">Patient & Blood Need</h2>
+                        <p class="mt-1 text-sm text-slate-500">Add the core request details clearly.</p>
+                    </div>
+                    <div class="hidden sm:block rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-red-700 ring-1 ring-rose-100">
+                        Step 2
+                    </div>
+                </div>
+
+                <div class="mt-5">
+                    <label class="block text-sm font-medium text-slate-700">Patient Name</label>
+                    <input
+                        name="patient_name"
+                        value="{{ old('patient_name') }}"
+                        required
+                        class="mt-2"
+                        placeholder="Patient full name">
+                    @error('patient_name') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">Blood Group</label>
+                        <select name="blood_group" required class="mt-2">
+                            <option value="">Select blood group</option>
+                            @foreach(['A+','A-','B+','B-','AB+','AB-','O+','O-'] as $bg)
+                                <option value="{{ $bg }}" @selected(old('blood_group') === $bg)>{{ $bg }}</option>
+                            @endforeach
+                        </select>
+                        @error('blood_group') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="flex items-end">
+                        <label class="flex w-full items-center gap-3 rounded-2xl border border-red-200 bg-red-50/70 px-4 py-3">
+                            <input
+                                type="checkbox"
+                                name="is_emergency"
+                                value="1"
+                                class="rounded border-red-300 text-red-600 focus:ring-red-500"
+                                @checked(old('is_emergency'))>
+                            <div>
+                                <div class="text-sm font-semibold text-red-700">Emergency Request</div>
+                                <div class="text-xs text-red-600/80">Mark this when blood is needed urgently.</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">Needed Date</label>
+                        <input
+                            type="date"
+                            name="needed_date"
+                            value="{{ old('needed_date') }}"
+                            required
+                            class="mt-2">
+                        @error('needed_date') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">Quantity (bags)</label>
+                        <input
+                            type="number"
+                            name="quantity_bags"
+                            min="1"
+                            max="20"
+                            value="{{ old('quantity_bags') }}"
+                            class="mt-2"
+                            placeholder="e.g. 2">
+                        @error('quantity_bags') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+            </section>
+
+            {{-- Location --}}
+            <section class="rounded-[26px] border border-slate-100 bg-white p-5 sm:p-6">
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h2 class="text-base font-semibold text-slate-900">Location Details</h2>
+                        <p class="mt-1 text-sm text-slate-500">This helps match nearby donors more accurately.</p>
+                    </div>
+                    <div class="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">
+                        Required for matching
+                    </div>
+                </div>
+
+                <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">Division</label>
+                        <select id="division_id" name="division_id" required class="mt-2">
+                            <option value="">Select division</option>
+                            @foreach($divisions as $division)
+                                <option value="{{ $division->id }}" @selected(old('division_id') == $division->id)>
+                                    {{ $division->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('division_id') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">District</label>
+                        <select id="district_id" name="district_id" required class="mt-2">
+                            <option value="">Select district</option>
+                        </select>
+                        @error('district_id') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+
+                <div id="dhakaModeWrapper" class="hidden mt-5 rounded-2xl border border-rose-100 bg-rose-50/50 p-4">
+                    <label class="block text-sm font-semibold text-slate-900">Dhaka Location Type</label>
+                    <p class="mt-1 text-xs leading-6 text-slate-600">
+                        Choose whether the location should be selected by Thana/Upazila or by City Corporation area.
+                    </p>
+
+                    <div class="mt-4 flex flex-wrap gap-3">
+                        <label class="inline-flex items-center gap-2 rounded-full border border-rose-100 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm">
+                            <input type="radio" name="dhaka_mode_radio" value="upazila" class="text-red-600 focus:ring-red-500" checked>
+                            <span>Thana / Upazila</span>
+                        </label>
+
+                        <label class="inline-flex items-center gap-2 rounded-full border border-rose-100 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm">
+                            <input type="radio" name="dhaka_mode_radio" value="city" class="text-red-600 focus:ring-red-500">
+                            <span>City Corporation</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="upazilaWrapper" class="mt-5">
+                    <label class="block text-sm font-medium text-slate-700">Upazila / Thana</label>
+                    <select id="upazila_id" name="upazilla_id" class="mt-2">
+                        <option value="">Select upazila</option>
+                    </select>
+                    @error('upazilla_id') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div id="corpWrapper" class="hidden mt-5">
+                    <label class="block text-sm font-medium text-slate-700">City Corporation</label>
+                    <select id="city_corporation_id" name="city_corporation_id" class="mt-2">
+                        <option value="">Select city corporation</option>
+                    </select>
+                    @error('city_corporation_id') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div id="cityAreaWrapper" class="hidden mt-5">
+                    <label class="block text-sm font-medium text-slate-700">City Area</label>
+                    <select id="city_area_id" name="city_area_id" class="mt-2">
+                        <option value="">Select city area</option>
+                    </select>
+                    @error('city_area_id') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+            </section>
+
+            {{-- Extra --}}
+            <section class="rounded-[26px] border border-slate-100 bg-white p-5 sm:p-6">
+                <div class="flex items-center justify-between gap-3">
+                    <div>
+                        <h2 class="text-base font-semibold text-slate-900">Additional Details</h2>
+                        <p class="mt-1 text-sm text-slate-500">Optional but helpful for donors.</p>
+                    </div>
+                    <div class="hidden sm:block rounded-full bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
+                        Optional
+                    </div>
+                </div>
+
+                <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">Hospital Name</label>
+                        <input
+                            name="hospital_name"
+                            value="{{ old('hospital_name') }}"
+                            class="mt-2"
+                            placeholder="e.g. Dhaka Medical College">
+                        @error('hospital_name') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">Address Line</label>
+                        <input
+                            name="address_line"
+                            value="{{ old('address_line') }}"
+                            class="mt-2"
+                            placeholder="Ward, Road, House, Gate, etc.">
+                        @error('address_line') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+
+                <div class="mt-5">
+                    <label class="block text-sm font-medium text-slate-700">Note</label>
+                    <textarea
+                        name="note"
+                        rows="4"
+                        class="mt-2"
+                        placeholder="Anything important donors should know...">{{ old('note') }}</textarea>
+                    @error('note') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+            </section>
+
+            <div class="flex flex-col gap-3 border-t border-rose-100 pt-6 sm:flex-row sm:items-center sm:justify-end">
+                <a href="{{ url()->previous() }}"
+                    class="btn-secondary w-full sm:w-auto">
+                    Cancel
+                </a>
+
+                <button id="submitBtn" class="btn-primary w-full sm:w-auto">
+                    Create Request
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -410,7 +443,6 @@
             return;
         }
 
-        // default Dhaka -> upazila
         locationModeEl.value = 'upazila';
         document.querySelector('input[name="dhaka_mode_radio"][value="upazila"]').checked = true;
         setVisible(upazilaWrapper, true);
@@ -445,7 +477,6 @@
         await loadCityAreas(corpEl.value);
     });
 
-    // Prevent double submit + keep your debug logs (but safe)
     form.addEventListener('submit', function () {
         console.log('location_mode:', locationModeEl.value);
         console.log('upazilla_id:', upazilaEl.value);
@@ -459,7 +490,6 @@
         }
     });
 
-    // INIT restore old()
     (async function init() {
         if (oldDivision) {
             divisionEl.value = oldDivision;

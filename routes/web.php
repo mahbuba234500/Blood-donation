@@ -4,10 +4,11 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DonorController;
 use App\Http\Controllers\BloodRequestController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\DonorSearchController;
 
 Route::get('/', function () {
     return view('welcome');
-});
+})->name('landingPage');
 
 Route::get('/dashboard', function () {
     return view('dashboard');
@@ -44,5 +45,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/blood-requests/{bloodRequest}/complete', [BloodRequestController::class, 'complete'])
         ->name('blood-requests.complete');
 });
+
+Route::get('/donors', [DonorSearchController::class, 'index'])->name('donors.index');
 
 require __DIR__ . '/auth.php';

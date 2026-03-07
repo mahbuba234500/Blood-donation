@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,48 +8,51 @@
 
     <title>{{ config('app.name', 'Blood Donation') }}</title>
 
-    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700" rel="stylesheet" />
 
-    <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>[x-cloak]{ display:none !important; }</style>
 </head>
 
-<body class="font-sans antialiased bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-
-    <!-- Soft background glow -->
+<body class="min-h-screen bg-rose-50/40 text-slate-800 antialiased">
     <div class="pointer-events-none fixed inset-0 overflow-hidden">
-        <div class="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-red-500/10 blur-3xl"></div>
-        <div class="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-red-500/10 blur-3xl"></div>
+        <div class="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-rose-100/70 via-white/40 to-transparent"></div>
+        <div class="absolute -top-16 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-rose-200/30 blur-3xl"></div>
+        <div class="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-red-100/25 blur-3xl"></div>
     </div>
 
-    <div class="relative min-h-screen flex flex-col justify-center items-center px-4 py-10">
+    <div class="relative flex min-h-screen flex-col items-center justify-center px-4 py-10">
+        <div class="mb-8">
+            <a href="{{ route('landingPage') }}" class="group flex flex-col items-center gap-3 text-center">
+                <div class="flex h-16 w-16 items-center justify-center rounded-3xl bg-white shadow-sm ring-1 ring-rose-100 transition group-hover:shadow-md">
+                    <x-application-logo class="h-9 w-9 text-red-600" />
+                </div>
 
-        <!-- Logo -->
-        <div class="mb-6">
-            <a href="/" class="flex flex-col items-center gap-3">
-                <x-application-logo class="h-16 w-16 text-red-600" />
-                <span class="text-lg font-semibold tracking-tight">
-                    {{ config('app.name', 'Blood Donation') }}
-                </span>
+                <div>
+                    <div class="text-lg font-semibold tracking-tight text-slate-900 transition group-hover:text-red-600">
+                        {{ config('app.name', 'Blood Donation') }}
+                    </div>
+                    <div class="mt-1 text-sm text-slate-500">
+                        A calm place to find help and save lives
+                    </div>
+                </div>
             </a>
         </div>
 
-        <!-- Card Container -->
         <div class="w-full max-w-md">
-            <div class="rounded-3xl border border-slate-200/70 bg-white p-6 shadow-sm dark:bg-slate-900 dark:border-slate-800">
+            <div class="rounded-[28px] border border-white/80 bg-white/90 p-7 shadow-[0_10px_40px_rgba(15,23,42,0.06)] backdrop-blur">
                 {{ $slot }}
             </div>
         </div>
 
-        <!-- Footer -->
-        <p class="mt-8 text-xs text-slate-500 dark:text-slate-400 text-center">
-            Donate blood. Save lives. 🩸
+        <p class="mt-8 text-center text-sm text-slate-500">
+            Donate blood. Save lives. One peaceful step at a time.
         </p>
     </div>
 
+    @stack('scripts')
 </body>
+
 </html>

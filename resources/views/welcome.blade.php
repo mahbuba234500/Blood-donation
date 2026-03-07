@@ -1,238 +1,324 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+@extends('layouts.app')
 
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <title>{{ config('app.name', 'Blood Donation') }}</title>
-
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700" rel="stylesheet" />
-
-    <!-- Styles / Scripts -->
-    @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @endif
-</head>
-
-<body class="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-    <!-- Top Nav -->
-    <header class="sticky top-0 z-50 border-b border-slate-200/70 bg-white/80 backdrop-blur dark:border-slate-800/70 dark:bg-slate-950/70">
-        <div class="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
-            <a href="{{ url('/') }}" class="flex items-center gap-2">
-                <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-red-600 text-white font-bold">
-                    🩸
-                </span>
-                <div class="leading-tight">
-                    <div class="font-semibold">{{ config('app.name', 'Blood Donation') }}</div>
-                    <div class="text-xs text-slate-500 dark:text-slate-400">Donate • Request • Save Lives</div>
-                </div>
-            </a>
-
-            <nav class="flex items-center gap-2">
-                <a href="{{ route('blood-requests.index') }}"
-                    class="inline-flex items-center rounded-xl px-4 py-2 text-sm font-medium border border-slate-200 hover:bg-slate-50
-          dark:border-slate-800 dark:hover:bg-slate-900">
-                    All Requests
-                </a>
-                @if (Route::has('login'))
-                @auth
-                <a href="{{ url('/dashboard') }}"
-                    class="inline-flex items-center rounded-xl px-4 py-2 text-sm font-medium bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white">
-                    Dashboard
-                </a>
-                @else
-                <a href="{{ route('login') }}"
-                    class="inline-flex items-center rounded-xl px-4 py-2 text-sm font-medium border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900">
-                    Log in
-                </a>
-
-                @if (Route::has('register'))
-                <a href="{{ route('register') }}"
-                    class="inline-flex items-center rounded-xl px-4 py-2 text-sm font-medium bg-red-600 text-white hover:bg-red-700">
-                    Register
-                </a>
-                @endif
-                @endauth
-                @endif
-            </nav>
-        </div>
-    </header>
-
-    <!-- Hero -->
-    <main>
-        <section class="mx-auto max-w-6xl px-4 pt-10 pb-8">
-            <div class="grid gap-10 lg:grid-cols-2 lg:items-center">
-                <div>
-                    <div class="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-medium text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-300">
-                        <span class="h-2 w-2 rounded-full bg-red-600"></span>
-                        Bangladesh Blood Donation Network
-                    </div>
-
-                    <h1 class="mt-4 text-4xl font-bold tracking-tight sm:text-5xl">
-                        Find a donor fast. <span class="text-red-600">Request blood</span> instantly.
-                    </h1>
-
-                    <p class="mt-4 text-base text-slate-600 dark:text-slate-300">
-                        A simple platform to connect donors and patients by location (Division → District → Upazila / Dhaka City Corp).
-                        Post a request, match with nearby donors, and save lives.
-                    </p>
-
-                    <div class="mt-6 flex flex-col gap-3 sm:flex-row">
-                        <a href="{{ route('register') }}"
-                            class="inline-flex justify-center rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-700">
-                            Become a Donor
-                        </a>
-
-                        <a href="{{ Route::has('blood-requests.create') ? route('blood-requests.create') : (Route::has('login') ? route('login') : '#') }}"
-                            class="inline-flex justify-center rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900">
-                            Create Blood Request
-                        </a>
-                        <a href="{{ route('blood-requests.index') }}"
-                            class="inline-flex justify-center rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold
-          hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900">
-                            Browse All Requests
-                        </a>
-                    </div>
-
-                    <div class="mt-6 grid grid-cols-3 gap-3">
-                        <div class="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                            <div class="text-xs text-slate-500 dark:text-slate-400">Response</div>
-                            <div class="mt-1 text-lg font-semibold">Quick</div>
-                        </div>
-                        <div class="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                            <div class="text-xs text-slate-500 dark:text-slate-400">Match by</div>
-                            <div class="mt-1 text-lg font-semibold">Location</div>
-                        </div>
-                        <div class="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                            <div class="text-xs text-slate-500 dark:text-slate-400">Trusted</div>
-                            <div class="mt-1 text-lg font-semibold">Community</div>
-                        </div>
-                    </div>
+@section('content')
+    <section class="mx-auto max-w-6xl pt-4 pb-10 lg:pt-8">
+        <div class="grid gap-12 lg:grid-cols-2 lg:items-center">
+            <div>
+                <div class="badge-soft">
+                    <span class="mr-2 h-2 w-2 rounded-full bg-red-500"></span>
+                    Bangladesh Blood Donation Network
                 </div>
 
-                <!-- Visual panel -->
-                <div class="relative">
-                    <div class="absolute -inset-3 rounded-3xl bg-gradient-to-br from-red-100 to-white blur-2xl dark:from-red-950/40 dark:to-slate-950"></div>
+                <h1 class="mt-5 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
+                    Find a donor with calm,
+                    <span class="text-red-600">request blood with confidence.</span>
+                </h1>
 
-                    <div class="relative rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
-                        <div class="flex items-start justify-between gap-4">
-                            <div>
-                                <div class="text-sm font-semibold">Emergency Request</div>
-                                <div class="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                                    Example preview (your real requests will appear in app pages)
-                                </div>
+                <p class="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+                    A gentle and reliable platform that connects blood donors and patients by blood group and location.
+                    Search nearby donors, create urgent requests, and help save lives with clarity and care.
+                </p>
+
+                <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                    <a href="{{ route('donors.index') }}" class="btn-primary">
+                        Find Blood Donor
+                    </a>
+
+                    <a href="{{ Route::has('blood-requests.create') ? route('blood-requests.create') : (Route::has('login') ? route('login') : '#') }}"
+                        class="btn-secondary">
+                        Create Blood Request
+                    </a>
+
+                    <a href="{{ route('blood-requests.index') }}" class="btn-secondary">
+                        Browse Requests
+                    </a>
+                </div>
+
+                <div class="mt-8 grid gap-4 sm:grid-cols-3">
+                    <div class="card-soft p-5">
+                        <div class="text-xs font-medium uppercase tracking-wide text-slate-500">Response</div>
+                        <div class="mt-2 text-xl font-semibold text-slate-900">Quick</div>
+                        <p class="mt-2 text-sm leading-6 text-slate-600">
+                            Get help faster in urgent situations.
+                        </p>
+                    </div>
+
+                    <div class="card-soft p-5">
+                        <div class="text-xs font-medium uppercase tracking-wide text-slate-500">Match by</div>
+                        <div class="mt-2 text-xl font-semibold text-slate-900">Location</div>
+                        <p class="mt-2 text-sm leading-6 text-slate-600">
+                            Find donors close to the patient.
+                        </p>
+                    </div>
+
+                    <div class="card-soft p-5">
+                        <div class="text-xs font-medium uppercase tracking-wide text-slate-500">Built for</div>
+                        <div class="mt-2 text-xl font-semibold text-slate-900">Trust</div>
+                        <p class="mt-2 text-sm leading-6 text-slate-600">
+                            A calm community-first donation experience.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="relative">
+                <div class="absolute -inset-4 rounded-[36px] bg-gradient-to-br from-rose-100/80 via-white to-amber-50/70 blur-2xl"></div>
+
+                <div class="card-soft relative overflow-hidden p-6 sm:p-7">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <div class="text-sm font-semibold text-slate-900">Emergency Request Preview</div>
+                            <div class="mt-1 text-sm leading-6 text-slate-600">
+                                A quick look at how urgent blood requests can appear.
                             </div>
-                            <span class="inline-flex items-center rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white">
-                                URGENT
-                            </span>
                         </div>
 
-                        <div class="mt-6 grid gap-3">
-                            <div class="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                                <div class="flex items-center justify-between">
-                                    <div class="text-sm font-medium">Blood Group</div>
-                                    <div class="text-sm font-semibold text-red-600">B+</div>
-                                </div>
-                                <div class="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                                    Needed: 3 bags • Date: 2026-03-07
-                                </div>
-                            </div>
+                        <span class="inline-flex items-center rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white shadow-sm">
+                            URGENT
+                        </span>
+                    </div>
 
-                            <div class="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                                <div class="text-sm font-medium">Location</div>
-                                <div class="mt-2 text-sm text-slate-700 dark:text-slate-200">
-                                    Dhaka • City Corporation Area
-                                </div>
-                                <div class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                    Matches donors within your selected area
-                                </div>
+                    <div class="mt-6 space-y-4">
+                        <div class="rounded-3xl border border-rose-100 bg-rose-50/60 p-4">
+                            <div class="flex items-center justify-between gap-3">
+                                <div class="text-sm font-medium text-slate-700">Blood Group</div>
+                                <div class="text-base font-semibold text-red-600">B+</div>
                             </div>
-
-                            <div class="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900">
-                                <div class="text-sm font-semibold">Next step</div>
-                                <div class="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                                    Donors get notified & can respond quickly.
-                                </div>
+                            <div class="mt-2 text-sm text-slate-600">
+                                Needed: 3 bags
+                            </div>
+                            <div class="mt-1 text-xs text-slate-500">
+                                Date: 07 Mar 2026
                             </div>
                         </div>
 
-                        <div class="mt-6 flex flex-wrap gap-2">
+                        <div class="rounded-3xl border border-slate-100 bg-white p-4">
+                            <div class="text-sm font-medium text-slate-700">Location</div>
+                            <div class="mt-2 text-sm font-medium text-slate-900">
+                                Dhaka • City Corporation Area
+                            </div>
+                            <div class="mt-1 text-xs text-slate-500">
+                                Matches nearby donors based on selected area.
+                            </div>
+                        </div>
+
+                        <div class="rounded-3xl border border-slate-100 bg-amber-50/60 p-4">
+                            <div class="text-sm font-semibold text-slate-900">What happens next?</div>
+                            <div class="mt-2 text-sm leading-6 text-slate-600">
+                                Matching donors can quickly see the request and respond with care.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <div class="text-xs font-medium uppercase tracking-wide text-slate-500">
+                            Search by blood group
+                        </div>
+
+                        <div class="mt-3 flex flex-wrap gap-2">
                             @php($groups = ['A+','A-','B+','B-','O+','O-','AB+','AB-'])
                             @foreach($groups as $g)
-                            <span class="inline-flex items-center rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold dark:border-slate-800">
-                                {{ $g }}
-                            </span>
+                                <span class="inline-flex items-center rounded-full border border-rose-100 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm">
+                                    {{ $g }}
+                                </span>
                             @endforeach
                         </div>
                     </div>
                 </div>
             </div>
-        </section>
-
-        <!-- How it works -->
-        <section class="mx-auto max-w-6xl px-4 py-10">
-            <h2 class="text-2xl font-bold">How it works</h2>
-            <p class="mt-2 text-slate-600 dark:text-slate-300">
-                Built for fast matching in Bangladesh location structure.
-            </p>
-
-            <div class="mt-6 grid gap-4 md:grid-cols-3">
-                <div class="rounded-3xl border border-slate-200 p-6 dark:border-slate-800">
-                    <div class="text-sm font-semibold">1) Complete profile</div>
-                    <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                        Add blood group, phone, and location (Division → District → Upazila / Dhaka City Corp).
-                    </p>
-                </div>
-
-                <div class="rounded-3xl border border-slate-200 p-6 dark:border-slate-800">
-                    <div class="text-sm font-semibold">2) Request blood</div>
-                    <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                        Create a request with needed date, quantity, and hospital/address note (optional).
-                    </p>
-                </div>
-
-                <div class="rounded-3xl border border-slate-200 p-6 dark:border-slate-800">
-                    <div class="text-sm font-semibold">3) Match donors</div>
-                    <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                        Notify matching donors nearby so they can respond quickly.
-                    </p>
-                </div>
-            </div>
-        </section>
-
-        <!-- CTA -->
-        <section class="mx-auto max-w-6xl px-4 pb-14">
-            <div class="rounded-3xl bg-slate-900 p-8 text-white dark:bg-slate-100 dark:text-slate-900">
-                <div class="grid gap-6 md:grid-cols-2 md:items-center">
-                    <div>
-                        <h3 class="text-2xl font-bold">Ready to save a life today?</h3>
-                        <p class="mt-2 text-sm opacity-90">
-                            Join as a donor or create a request. Every minute matters.
-                        </p>
-                    </div>
-                    <div class="flex flex-col gap-3 sm:flex-row md:justify-end">
-                        <a href="{{ route('register') }}"
-                            class="inline-flex justify-center rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-700 dark:bg-red-600 dark:text-white dark:hover:bg-red-700">
-                            Register as Donor
-                        </a>
-                        <a href="{{ Route::has('login') ? route('login') : '#' }}"
-                            class="inline-flex justify-center rounded-xl border border-white/30 px-5 py-3 text-sm font-semibold hover:bg-white/10 dark:border-slate-300 dark:hover:bg-slate-200">
-                            Log in
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <footer class="border-t border-slate-200/70 py-8 text-center text-sm text-slate-500 dark:border-slate-800/70 dark:text-slate-400">
-        <div class="mx-auto max-w-6xl px-4">
-            © {{ date('Y') }} {{ config('app.name', 'Blood Donation') }} • Built with Laravel
         </div>
-    </footer>
-</body>
+    </section>
 
-</html>
+    <section class="mx-auto max-w-6xl py-10">
+        <div class="max-w-3xl">
+            <div class="badge-soft">How it works</div>
+            <h2 class="mt-4 text-3xl font-semibold tracking-tight text-slate-900">
+                Three simple steps to connect help with hope
+            </h2>
+            <p class="mt-3 text-base leading-7 text-slate-600">
+                Designed around Bangladesh’s location structure so donors and requests can be matched more clearly and quickly.
+            </p>
+        </div>
+
+        <div class="mt-8 grid gap-5 md:grid-cols-3">
+            <div class="card-soft p-6">
+                <div class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-50 text-sm font-bold text-red-600 ring-1 ring-rose-100">
+                    1
+                </div>
+                <div class="mt-4 text-lg font-semibold text-slate-900">Complete profile</div>
+                <p class="mt-2 text-sm leading-6 text-slate-600">
+                    Add blood group, phone number, and location so others can find you more easily when needed.
+                </p>
+            </div>
+
+            <div class="card-soft p-6">
+                <div class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-50 text-sm font-bold text-red-600 ring-1 ring-rose-100">
+                    2
+                </div>
+                <div class="mt-4 text-lg font-semibold text-slate-900">Create a request</div>
+                <p class="mt-2 text-sm leading-6 text-slate-600">
+                    Post the needed blood group, date, and location so nearby donors can understand the urgency clearly.
+                </p>
+            </div>
+
+            <div class="card-soft p-6">
+                <div class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-50 text-sm font-bold text-red-600 ring-1 ring-rose-100">
+                    3
+                </div>
+                <div class="mt-4 text-lg font-semibold text-slate-900">Match nearby donors</div>
+                <p class="mt-2 text-sm leading-6 text-slate-600">
+                    Connect people faster through location-based matching and make urgent moments feel more manageable.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section class="mx-auto max-w-6xl py-10">
+        <div class="max-w-3xl">
+            <div class="badge-soft">Blood donation basics</div>
+            <h2 class="mt-4 text-3xl font-semibold tracking-tight text-slate-900">
+                Blood Compatibility Guide
+            </h2>
+            <p class="mt-3 text-base leading-7 text-slate-600">
+                A quick reference for who can donate blood to whom, and who can receive from whom.
+                This is a simple red blood cell donation guide for awareness.
+            </p>
+        </div>
+
+        <div class="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div class="card-soft p-5">
+                <div class="badge-soft">A+</div>
+                <div class="mt-4">
+                    <h3 class="text-sm font-semibold text-slate-900">Can donate to</h3>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">A+, AB+</p>
+                </div>
+                <div class="mt-4 border-t border-rose-100 pt-4">
+                    <h3 class="text-sm font-semibold text-slate-900">Can receive from</h3>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">A+, A-, O+, O-</p>
+                </div>
+            </div>
+
+            <div class="card-soft p-5">
+                <div class="badge-soft">A-</div>
+                <div class="mt-4">
+                    <h3 class="text-sm font-semibold text-slate-900">Can donate to</h3>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">A+, A-, AB+, AB-</p>
+                </div>
+                <div class="mt-4 border-t border-rose-100 pt-4">
+                    <h3 class="text-sm font-semibold text-slate-900">Can receive from</h3>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">A-, O-</p>
+                </div>
+            </div>
+
+            <div class="card-soft p-5">
+                <div class="badge-soft">B+</div>
+                <div class="mt-4">
+                    <h3 class="text-sm font-semibold text-slate-900">Can donate to</h3>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">B+, AB+</p>
+                </div>
+                <div class="mt-4 border-t border-rose-100 pt-4">
+                    <h3 class="text-sm font-semibold text-slate-900">Can receive from</h3>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">B+, B-, O+, O-</p>
+                </div>
+            </div>
+
+            <div class="card-soft p-5">
+                <div class="badge-soft">B-</div>
+                <div class="mt-4">
+                    <h3 class="text-sm font-semibold text-slate-900">Can donate to</h3>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">B+, B-, AB+, AB-</p>
+                </div>
+                <div class="mt-4 border-t border-rose-100 pt-4">
+                    <h3 class="text-sm font-semibold text-slate-900">Can receive from</h3>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">B-, O-</p>
+                </div>
+            </div>
+
+            <div class="card-soft p-5">
+                <div class="badge-soft">AB+</div>
+                <div class="mt-4">
+                    <h3 class="text-sm font-semibold text-slate-900">Can donate to</h3>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">AB+</p>
+                </div>
+                <div class="mt-4 border-t border-rose-100 pt-4">
+                    <h3 class="text-sm font-semibold text-slate-900">Can receive from</h3>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">All blood groups</p>
+                </div>
+            </div>
+
+            <div class="card-soft p-5">
+                <div class="badge-soft">AB-</div>
+                <div class="mt-4">
+                    <h3 class="text-sm font-semibold text-slate-900">Can donate to</h3>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">AB+, AB-</p>
+                </div>
+                <div class="mt-4 border-t border-rose-100 pt-4">
+                    <h3 class="text-sm font-semibold text-slate-900">Can receive from</h3>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">A-, B-, AB-, O-</p>
+                </div>
+            </div>
+
+            <div class="card-soft p-5">
+                <div class="badge-soft">O+</div>
+                <div class="mt-4">
+                    <h3 class="text-sm font-semibold text-slate-900">Can donate to</h3>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">O+, A+, B+, AB+</p>
+                </div>
+                <div class="mt-4 border-t border-rose-100 pt-4">
+                    <h3 class="text-sm font-semibold text-slate-900">Can receive from</h3>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">O+, O-</p>
+                </div>
+            </div>
+
+            <div class="card-soft p-5">
+                <div class="badge-soft">O-</div>
+                <div class="mt-4">
+                    <h3 class="text-sm font-semibold text-slate-900">Can donate to</h3>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">All blood groups</p>
+                </div>
+                <div class="mt-4 border-t border-rose-100 pt-4">
+                    <h3 class="text-sm font-semibold text-slate-900">Can receive from</h3>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">O- only</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-6 rounded-3xl border border-amber-200 bg-amber-50/80 px-5 py-4 text-sm leading-6 text-amber-800">
+            Always follow hospital screening, doctor advice, and crossmatch requirements before transfusion.
+        </div>
+    </section>
+
+    <section class="mx-auto max-w-6xl pb-16 pt-4">
+        <div class="overflow-hidden rounded-[32px] border border-white/80 bg-gradient-to-br from-slate-900 to-slate-800 p-8 text-white shadow-[0_10px_40px_rgba(15,23,42,0.10)] sm:p-10">
+            <div class="grid gap-8 md:grid-cols-2 md:items-center">
+                <div>
+                    <div class="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white/80">
+                        Every minute matters
+                    </div>
+
+                    <h3 class="mt-4 text-3xl font-semibold tracking-tight">
+                        Ready to help save a life today?
+                    </h3>
+
+                    <p class="mt-3 max-w-xl text-sm leading-7 text-white/80 sm:text-base">
+                        Join as a donor or create a blood request now. A calm, clear platform can make urgent moments easier to handle.
+                    </p>
+                </div>
+
+                <div class="flex flex-col gap-3 sm:flex-row md:justify-end">
+                    <a href="{{ route('register') }}" class="inline-flex items-center justify-center rounded-full bg-red-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-700">
+                        Register as Donor
+                    </a>
+
+                    <a href="{{ route('login') }}" class="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10">
+                        Log in
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="border-t border-white/70 py-8 text-center text-sm text-slate-500">
+        © {{ date('Y') }} {{ config('app.name', 'Blood Donation') }} • Made with care using Laravel
+    </footer>
+@endsection

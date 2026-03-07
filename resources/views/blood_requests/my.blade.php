@@ -1,81 +1,65 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="py-6">
-    <div class="max-w-5xl mx-auto space-y-6">
+<div class="mx-auto max-w-6xl py-6 sm:py-8">
+    <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div class="min-w-0">
+            <div class="badge-soft">Your activity</div>
+            <h1 class="mt-4 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+                My Requests
+            </h1>
+            <p class="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+                Track your blood requests, review their status, and manage them calmly from one place.
+            </p>
+        </div>
 
-        {{-- Header --}}
-        <div class="flex items-start sm:items-center justify-between gap-4">
-            <div>
-                <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-                    My Requests
-                </h2>
-                <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                    Manage and track your blood requests.
-                </p>
-            </div>
-
-            <a href="{{ route('blood-requests.create') }}"
-               class="inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm font-semibold
-                      bg-red-600 text-white shadow-sm hover:bg-red-700
-                      focus:outline-none focus:ring-2 focus:ring-red-500/60 focus:ring-offset-2
-                      focus:ring-offset-slate-50 dark:focus:ring-offset-slate-950">
+        <div class="shrink-0">
+            <a href="{{ route('blood-requests.create') }}" class="btn-primary w-full sm:w-auto">
                 Create Request
             </a>
         </div>
-
-        {{-- Success Message --}}
-        @if(session('success'))
-            <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800
-                        dark:border-emerald-900/40 dark:bg-emerald-950/40 dark:text-emerald-200">
-                {{ session('success') }}
-            </div>
-        @endif
-
-        {{-- Requests List --}}
-        <div class="space-y-4">
-            @forelse($requests as $r)
-                @include('blood_requests._card', ['r' => $r])
-            @empty
-                <div class="rounded-3xl border border-slate-200/70 bg-white/70 p-8 text-center shadow-sm backdrop-blur
-                            dark:border-slate-800 dark:bg-slate-900/60">
-                    <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500/10 text-red-600 dark:text-red-400">
-                        <svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 2s7 7 7 12a7 7 0 0 1-14 0c0-5 7-12 7-12z"/>
-                        </svg>
-                    </div>
-
-                    <h3 class="mt-4 text-base font-semibold text-slate-900 dark:text-slate-100">
-                        No requests yet
-                    </h3>
-
-                    <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                        Create your first blood request to get started.
-                    </p>
-
-                    <div class="mt-5">
-                        <a href="{{ route('blood-requests.create') }}"
-                           class="inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm font-semibold
-                                  bg-red-600 text-white shadow-sm hover:bg-red-700
-                                  focus:outline-none focus:ring-2 focus:ring-red-500/60 focus:ring-offset-2
-                                  focus:ring-offset-slate-50 dark:focus:ring-offset-slate-950">
-                            Create Request
-                        </a>
-                    </div>
-                </div>
-            @endforelse
-        </div>
-
-        {{-- Pagination --}}
-        @if($requests->hasPages())
-            <div class="pt-2">
-                <div class="rounded-3xl border border-slate-200/70 bg-white/70 px-4 py-3 shadow-sm backdrop-blur
-                            dark:border-slate-800 dark:bg-slate-900/60">
-                    {{ $requests->links() }}
-                </div>
-            </div>
-        @endif
-
     </div>
+
+    @if(session('success'))
+        <div class="mb-6 rounded-[24px] border border-emerald-200 bg-emerald-50/90 px-5 py-4 text-sm text-emerald-800 shadow-sm">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    <div class="space-y-5">
+        @forelse($requests as $r)
+            @include('blood_requests._card', ['r' => $r])
+        @empty
+            <div class="card-soft px-6 py-10 text-center sm:px-10">
+                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-rose-50 text-red-600 ring-1 ring-rose-100">
+                    <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2s7 7 7 12a7 7 0 0 1-14 0c0-5 7-12 7-12z"/>
+                    </svg>
+                </div>
+
+                <h3 class="mt-5 text-lg font-semibold text-slate-900">
+                    No requests yet
+                </h3>
+
+                <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+                    You have not created any blood requests yet. When help is needed, create your first request here.
+                </p>
+
+                <div class="mt-6">
+                    <a href="{{ route('blood-requests.create') }}" class="btn-primary">
+                        Create Request
+                    </a>
+                </div>
+            </div>
+        @endforelse
+    </div>
+
+    @if($requests->hasPages())
+        <div class="mt-8">
+            <div class="card-soft px-4 py-3">
+                {{ $requests->links() }}
+            </div>
+        </div>
+    @endif
 </div>
 @endsection

@@ -33,6 +33,7 @@ class User extends Authenticatable
         'address_line',
         'role',
         'medical_history',
+        'is_blocked',
     ];
 
     /**
@@ -58,6 +59,11 @@ class User extends Authenticatable
         ];
     }
 
+    public function donorProfile()
+    {
+        return $this->hasOne(DonorProfile::class);
+    }
+
     public function division()
     {
         return $this->belongsTo(Division::class);
@@ -68,8 +74,18 @@ class User extends Authenticatable
         return $this->belongsTo(District::class);
     }
 
-    public function area()
+    public function upazilla()
     {
-        return $this->belongsTo(Area::class);
+        return $this->belongsTo(Upazilla::class);
+    }
+
+    public function cityCorporation()
+    {
+        return $this->belongsTo(CityCorporation::class);
+    }
+
+    public function cityArea()
+    {
+        return $this->belongsTo(CityArea::class);
     }
 }
