@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DonorController;
 use App\Http\Controllers\BloodRequestController;
@@ -49,3 +50,16 @@ Route::middleware('auth')->group(function () {
 Route::get('/donors', [DonorSearchController::class, 'index'])->name('donors.index');
 
 require __DIR__ . '/auth.php';
+
+Route::middleware('auth')->group(function () {
+
+    Route::get('/notifications', [NotificationController::class, 'index'])
+        ->name('notifications.index');
+
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])
+        ->name('notifications.read');
+
+    Route::post('notifications/read-all', [NotificationController::class, 'readAll'])
+        ->name('notifications.readAll');
+
+});

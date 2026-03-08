@@ -57,3 +57,24 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+
+
+# When blood request is created:
+
+```
+BloodRequestController
+        ↓
+dispatch event
+        ↓
+NotifyEligibleDonors Listener
+        ↓
+send NewBloodRequestNotification
+        ↓
+saved in notifications table
+        ↓
+donor sees bell badge 🔔
+        ↓
+clicks notifications page
+
+```

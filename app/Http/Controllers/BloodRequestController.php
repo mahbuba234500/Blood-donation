@@ -6,7 +6,10 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Models\Division;
 use App\Models\BloodRequest;
+use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use App\Notifications\NewBloodRequestNotification;
+use App\Events\BloodRequestCreated;
 
 class BloodRequestController extends Controller
 {
@@ -107,9 +110,11 @@ class BloodRequestController extends Controller
         $validated['expires_at'] = $validated['expires_at']
             ?? now()->parse($validated['needed_date'])->addDay()->endOfDay();
 
-        BloodRequest::create($validated);
+        $bloodRequest = BloodRequest::create($validated);
 
-        return redirect()->route('blood-requests.my')->with('success', 'Blood request created.');
+        event(new BloodRequestCreated($bloodRequest));
+
+        return redirect()->route('blood-requests.my')->with('success', 'lood request created and eligible donors notified.');
     }
 
     public function cancel(BloodRequest $bloodRequest)
