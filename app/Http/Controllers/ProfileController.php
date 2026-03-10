@@ -46,9 +46,9 @@ class ProfileController extends Controller
 
             // Dhaka city flow:
             'city_corporation_id' => ['nullable', 'exists:city_corporations,id'],
-            'city_area_id'        => ['nullable', 'exists:city_areas,id'],
+            'city_area_id' => ['nullable', 'exists:city_areas,id'],
 
-            'address_line'    => ['nullable', 'string', 'max:255'],
+            'address_line' => ['nullable', 'string', 'max:255'],
             'medical_history' => ['nullable', 'string'],
 
             'become_donor' => ['nullable', 'boolean'],
@@ -128,7 +128,7 @@ class ProfileController extends Controller
     // Districts by division (used by your division->district dropdown)
     public function districtsByDivision(Division $division)
     {
-        $district =  District::where('division_id', $division->id)
+        $district = District::where('division_id', $division->id)
             ->orderBy('name')
             ->get(['id', 'name']);
 
@@ -168,5 +168,68 @@ class ProfileController extends Controller
     {
         return !empty($user->blood_group) && (
             !empty($user->upazilla_id) || !empty($user->city_area_id));
+    }
+
+    public function edit(Request $request)
+    {
+        $user = $request->user();
+
+        $divisions = Division::orderBy('name')->get(['id', 'name']);
+
+        $districts = collect();
+        $upazillas = collect();
+        $cityCorporations = collect();
+        $cityAreas = collect();
+
+        if ($user->division_id) {
+            $districts = District::where('division_id', $user->division_id)
+                ->orderBy('name')
+                ->get(['id', 'division_id', 'name']);
+        }
+
+        if ($user->district_id) {
+            $district = District::find($user->district_id);
+
+            if ($district) {
+                $upazillas = $district->upazillas()
+                    ->orderBy('name')
+                    ->get(['id', 'district_id', 'name']);
+
+                if ($district->name === 'Dhaka') {
+                    $cityCorporations = CityCorporation::where('district_id', $district->id)
+                        ->orderBy('name')
+                        ->get(['id', 'district_id', 'name']);
+                }
+            }
+        }
+
+        if ($user->city_corporation_id) {
+            $cityCorporation = CityCorporation::find($user->city_corporation_id);
+
+            if ($cityCorporation) {
+                $cityAreas = $cityCorporation->cityareas()
+                    ->orderBy('name')
+                    ->get(['id', 'city_corporation_id', 'name']);
+            }
+        }
+
+        $donorProfile = DonorProfile::where('user_id', $user->id)->first();
+
+        $locationMode = 'upazila';
+
+        if (!empty($user->city_corporation_id) || !empty($user->city_area_id)) {
+            $locationMode = 'city';
+        }
+
+        return view('profile.edit', compact(
+            'user',
+            'divisions',
+            'districts',
+            'upazillas',
+            'cityCorporations',
+            'cityAreas',
+            'donorProfile',
+            'locationMode'
+        ));
     }
 }

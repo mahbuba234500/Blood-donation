@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DonorController;
@@ -11,9 +12,6 @@ Route::get('/', function () {
     return view('welcome');
 })->name('landingPage');
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/locations/divisions/{division}/districts', [ProfileController::class, 'districtsByDivision']);
 Route::get('/locations/districts/{district}/upazillas', [ProfileController::class, 'upazillasByDistrict']);
@@ -23,17 +21,18 @@ Route::get('/locations/dhaka/city-corporations/{cityCorporation}/areas', [Profil
 Route::get('/blood-requests', [BloodRequestController::class, 'index'])
     ->name('blood-requests.index');
 
-Route::middleware(['auth', 'profile.complete'])->group(function () {
+Route::middleware('auth')->group(function () {
     Route::get('/profile/complete', [ProfileController::class, 'completeForm'])->name('profile.complete');
     Route::post('/profile/complete', [ProfileController::class, 'completeStore'])->name('profile.complete.store');
+
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
 
     Route::get('/donor/dashboard', [DonorController::class, 'dashboard'])->name('donor.dashboard');
     Route::post('/donor/dashboard', [DonorController::class, 'update'])->name('donor.update');
 });
 
 Route::middleware('auth')->group(function () {
-
-
 
     Route::get('/blood-requests/create', [BloodRequestController::class, 'create'])->name('blood-requests.create');
     Route::post('/blood-requests', [BloodRequestController::class, 'store'])->name('blood-requests.store');
@@ -45,7 +44,14 @@ Route::middleware('auth')->group(function () {
 
     Route::patch('/blood-requests/{bloodRequest}/complete', [BloodRequestController::class, 'complete'])
         ->name('blood-requests.complete');
+
+    Route::get('/blood-requests/{bloodRequest}', [BloodRequestController::class, 'show'])
+        ->name('blood-requests.show');
+
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 });
+
+
 
 Route::get('/donors', [DonorSearchController::class, 'index'])->name('donors.index');
 

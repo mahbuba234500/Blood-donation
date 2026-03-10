@@ -18,4 +18,28 @@ class DonorProfile extends Model
     {
         return $this->belongsTo(User::class);
     }
+    public function division()
+    {
+        return $this->belongsTo(Division::class);
+    }
+
+    public function district()
+    {
+        return $this->belongsTo(District::class);
+    }
+
+    public function upazilla()
+    {
+        return $this->belongsTo(Upazilla::class);
+    }
+
+    public function cityCorporation()
+    {
+        return $this->belongsTo(CityCorporation::class);
+    }
+
+    public function cityArea()
+    {
+        return $this->belongsTo(CityArea::class);
+    }
 }

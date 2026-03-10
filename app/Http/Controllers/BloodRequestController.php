@@ -134,4 +134,17 @@ class BloodRequestController extends Controller
 
         return back()->with('success', 'Request marked completed.');
     }
+    public function show(BloodRequest $bloodRequest)
+    {
+        $bloodRequest->load([
+            'requester',
+            'division',
+            'district',
+            'upazilla',
+            'cityCorporation',
+            'cityArea',
+        ]);
+
+        return view('blood_requests.show', compact('bloodRequest'));
+    }
 }
