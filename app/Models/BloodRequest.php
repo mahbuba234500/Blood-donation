@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Support\BloodCompatibility;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class BloodRequest extends Model
@@ -79,5 +80,36 @@ class BloodRequest extends Model
                 $qq->whereNull('expires_at')
                     ->orWhere('expires_at', '>', now());
             });
+    }
+    public function compatibleDonorBloodGroups(): array
+    {
+        return BloodCompatibility::compatibleDonorsFor($this->blood_group);
+    }
+
+    public function isCompatibleWithUser(?User $user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        return BloodCompatibility::canDonateTo($user->blood_group, $this->blood_group);
+    }
+
+    public function isExactBloodGroupMatchForUser(?User $user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        return BloodCompatibility::isExactMatch($user->blood_group, $this->blood_group);
+    }
+
+    public function scopeCompatibleForUser($query, ?User $user)
+    {
+        if (!$user || !$user->blood_group) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->whereIn('blood_group', BloodCompatibility::compatibleRecipientsFor($user->blood_group));
     }
 }

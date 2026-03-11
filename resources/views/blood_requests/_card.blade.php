@@ -37,9 +37,27 @@
         "Assalamu Alaikum / Adab, I saw your blood request for {$r->patient_name}. I may be able to help. Please share the exact location and urgency."
     );
 
+    $compatibleDonors = [
+        'A+' => ['A+', 'A-', 'O+', 'O-'],
+        'A-' => ['A-', 'O-'],
+        'B+' => ['B+', 'B-', 'O+', 'O-'],
+        'B-' => ['B-', 'O-'],
+        'AB+' => ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
+        'AB-' => ['A-', 'B-', 'AB-', 'O-'],
+        'O+' => ['O+', 'O-'],
+        'O-' => ['O-'],
+    ];
+
+    $userBloodGroup = auth()->check() ? $currentUser->blood_group : null;
+    $requestBloodGroup = $r->blood_group;
+
     $matchesBloodGroup = auth()->check()
-        && $currentUser->blood_group
-        && $currentUser->blood_group === $r->blood_group;
+        && $userBloodGroup
+        && isset($compatibleDonors[$requestBloodGroup])
+        && in_array($userBloodGroup, $compatibleDonors[$requestBloodGroup], true);
+
+    $isExactBloodGroupMatch = $matchesBloodGroup && $userBloodGroup === $requestBloodGroup;
+    $isCompatibleButNotExact = $matchesBloodGroup && $userBloodGroup !== $requestBloodGroup;
 
     $matchesDivision = auth()->check()
         && $currentUser->division_id
@@ -70,26 +88,28 @@
         $matchesCityCorporation ||
         $matchesCityArea;
 
-
     $matchLabel = null;
     $matchColor = null;
 
     if ($showMatchHints && !$isOwner) {
         if ($matchesBloodGroup && ($matchesUpazilla || $matchesCityArea)) {
-            $matchLabel = 'Best match for you';
+            $matchLabel = $isExactBloodGroupMatch ? 'Best match for you' : 'Compatible nearby match';
             $matchColor = 'bg-red-100 text-red-700 ring-red-200';
         } elseif ($matchesBloodGroup && ($matchesDistrict || $matchesCityCorporation)) {
-            $matchLabel = 'Strong match';
+            $matchLabel = $isExactBloodGroupMatch ? 'Strong match' : 'Compatible local match';
             $matchColor = 'bg-amber-100 text-amber-700 ring-amber-200';
-        } elseif ($matchesBloodGroup) {
+        } elseif ($isExactBloodGroupMatch) {
             $matchLabel = 'Matches your blood group';
             $matchColor = 'bg-emerald-100 text-emerald-700 ring-emerald-200';
+        } elseif ($isCompatibleButNotExact) {
+            $matchLabel = 'You can donate to this request';
+            $matchColor = 'bg-sky-100 text-sky-700 ring-sky-200';
         }
     }
 
     $matchReasons = [];
     if ($matchesBloodGroup)
-        $matchReasons[] = 'Blood Group';
+        $matchReasons[] = $isExactBloodGroupMatch ? 'Exact Blood Group' : 'Compatible Blood Group';
     if ($matchesDivision)
         $matchReasons[] = 'Division';
     if ($matchesDistrict)
@@ -155,18 +175,26 @@
 
 
             @if($showMatchHints && !$isOwner && $matchesBloodGroup && count($matchReasons))
-                <div
-                    class="mt-3 inline-flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 text-xs text-slate-600">
-                    <span class="font-semibold text-slate-800">Matches:</span>
+                <div class="mt-3 rounded-2xl border border-slate-200 bg-white/70 px-3 py-3 text-xs text-slate-600">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="font-semibold text-slate-800">Matches:</span>
 
-                    @foreach($matchReasons as $reason)
-                        <span class="rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-700">
-                            {{ $reason }}
-                        </span>
-                    @endforeach
+                        @foreach($matchReasons as $reason)
+                            <span class="rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-700">
+                                {{ $reason }}
+                            </span>
+                        @endforeach
+                    </div>
+
+                    @if($isCompatibleButNotExact)
+                        <div class="mt-2 text-slate-500">
+                            Requested: <span class="font-semibold text-slate-700">{{ $requestBloodGroup }}</span>
+                            • Your group: <span class="font-semibold text-slate-700">{{ $userBloodGroup }}</span>
+                            • You are a compatible donor
+                        </div>
+                    @endif
                 </div>
             @endif
-
 
             <div class="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-600">
                 <span class="font-medium text-slate-800">Patient:</span>

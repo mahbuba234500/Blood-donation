@@ -22,7 +22,12 @@
 
         $matchesBloodGroup = auth()->check()
             && $currentUser->blood_group
-            && $currentUser->blood_group === $bloodRequest->blood_group;
+            && \App\Support\BloodCompatibility::canDonateTo($currentUser->blood_group, $bloodRequest->blood_group);
+
+        $isExactBloodGroupMatch = $matchesBloodGroup
+            && \App\Support\BloodCompatibility::isExactMatch($currentUser->blood_group, $bloodRequest->blood_group);
+
+        $isCompatibleButNotExact = $matchesBloodGroup && !$isExactBloodGroupMatch;
 
         $matchesDivision = auth()->check()
             && $currentUser->division_id
@@ -52,24 +57,33 @@
 
         if (!$isOwner && $matchesBloodGroup) {
             if ($matchesUpazilla || $matchesCityArea) {
-                $matchLabel = 'Best match for you';
+                $matchLabel = $isExactBloodGroupMatch ? 'Best match for you' : 'Compatible nearby match';
                 $matchColor = 'bg-red-100 text-red-700 ring-red-200';
             } elseif ($matchesDistrict || $matchesCityCorporation) {
-                $matchLabel = 'Strong match';
+                $matchLabel = $isExactBloodGroupMatch ? 'Strong match' : 'Compatible local match';
                 $matchColor = 'bg-amber-100 text-amber-700 ring-amber-200';
-            } else {
+            } elseif ($isExactBloodGroupMatch) {
                 $matchLabel = 'Matches your blood group';
                 $matchColor = 'bg-emerald-100 text-emerald-700 ring-emerald-200';
+            } elseif ($isCompatibleButNotExact) {
+                $matchLabel = 'You can donate to this request';
+                $matchColor = 'bg-sky-100 text-sky-700 ring-sky-200';
             }
         }
 
         $matchReasons = [];
-        if ($matchesBloodGroup) $matchReasons[] = 'Blood Group';
-        if ($matchesDivision) $matchReasons[] = 'Division';
-        if ($matchesDistrict) $matchReasons[] = 'District';
-        if ($matchesUpazilla) $matchReasons[] = 'Upazilla';
-        if ($matchesCityCorporation) $matchReasons[] = 'City Corporation';
-        if ($matchesCityArea) $matchReasons[] = 'City Area';
+        if ($matchesBloodGroup)
+            $matchReasons[] = $isExactBloodGroupMatch ? 'Exact Blood Group' : 'Compatible Blood Group';
+        if ($matchesDivision)
+            $matchReasons[] = 'Division';
+        if ($matchesDistrict)
+            $matchReasons[] = 'District';
+        if ($matchesUpazilla)
+            $matchReasons[] = 'Upazilla';
+        if ($matchesCityCorporation)
+            $matchReasons[] = 'City Corporation';
+        if ($matchesCityArea)
+            $matchReasons[] = 'City Area';
     @endphp
 
     <div class="relative min-h-screen bg-slate-50">
@@ -95,26 +109,31 @@
                     <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                         <div>
                             <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-                                <span class="inline-flex rounded-xl bg-red-100 px-3 py-1 text-sm font-semibold text-red-700">
+                                <span
+                                    class="inline-flex rounded-xl bg-red-100 px-3 py-1 text-sm font-semibold text-red-700">
                                     {{ $bloodRequest->blood_group }}
                                 </span>
 
                                 @if ($bloodRequest->is_emergency)
-                                    <span class="inline-flex rounded-xl bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700">
+                                    <span
+                                        class="inline-flex rounded-xl bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700">
                                         Emergency
                                     </span>
                                 @endif
 
-                                <span class="inline-flex rounded-xl bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+                                <span
+                                    class="inline-flex rounded-xl bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
                                     {{ ucfirst($bloodRequest->status) }}
                                 </span>
 
                                 @if ($isOwner)
-                                    <span class="inline-flex rounded-xl bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700 ring-1 ring-sky-200">
+                                    <span
+                                        class="inline-flex rounded-xl bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700 ring-1 ring-sky-200">
                                         Your Request
                                     </span>
                                 @elseif ($matchLabel)
-                                    <span class="inline-flex rounded-xl px-3 py-1 text-xs font-semibold ring-1 {{ $matchColor }}">
+                                    <span
+                                        class="inline-flex rounded-xl px-3 py-1 text-xs font-semibold ring-1 {{ $matchColor }}">
                                         {{ $matchLabel }}
                                     </span>
                                 @endif
@@ -129,19 +148,34 @@
                             </p>
 
                             @if (!$isOwner && $matchesBloodGroup && count($matchReasons))
-                                <div class="mt-4 inline-flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                                    <span class="font-semibold text-slate-800">Matches you:</span>
-                                    @foreach ($matchReasons as $reason)
-                                        <span class="rounded-full bg-white px-2.5 py-1 font-medium text-slate-700 ring-1 ring-slate-200">
-                                            {{ $reason }}
-                                        </span>
-                                    @endforeach
+                                <div
+                                    class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-xs text-slate-600">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <span class="font-semibold text-slate-800">Matches you:</span>
+                                        @foreach ($matchReasons as $reason)
+                                            <span
+                                                class="rounded-full bg-white px-2.5 py-1 font-medium text-slate-700 ring-1 ring-slate-200">
+                                                {{ $reason }}
+                                            </span>
+                                        @endforeach
+                                    </div>
+
+                                    @if ($isCompatibleButNotExact)
+                                        <div class="mt-2 text-slate-500">
+                                            Requested:
+                                            <span class="font-semibold text-slate-700">{{ $bloodRequest->blood_group }}</span>
+                                            • Your group:
+                                            <span class="font-semibold text-slate-700">{{ $currentUser->blood_group }}</span>
+                                            • You are a compatible donor
+                                        </div>
+                                    @endif
                                 </div>
                             @endif
 
                             @if ($isOwner)
                                 <div class="mt-4 rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm text-sky-800">
-                                    This is your own blood request. You can review details, contact updates, or manage its status from this page.
+                                    This is your own blood request. You can review details, contact updates, or manage its
+                                    status from this page.
                                 </div>
                             @endif
                         </div>
@@ -167,29 +201,41 @@
 
                                 <div class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
                                     <div class="rounded-2xl bg-slate-50 p-4">
-                                        <div class="text-xs font-medium uppercase tracking-wide text-slate-500">Blood Group</div>
-                                        <div class="mt-2 text-sm font-semibold {{ $matchesBloodGroup ? 'text-emerald-700' : 'text-slate-900' }}">
-                                            {{ $matchesBloodGroup ? 'Matched' : 'Not matched' }}
+                                        <div class="text-xs font-medium uppercase tracking-wide text-slate-500">Blood Group
+                                        </div>
+                                        <div
+                                            class="mt-2 text-sm font-semibold {{ $matchesBloodGroup ? 'text-emerald-700' : 'text-slate-900' }}">
+                                            @if ($isExactBloodGroupMatch)
+                                                Exact match
+                                            @elseif ($isCompatibleButNotExact)
+                                                Compatible match
+                                            @else
+                                                Not matched
+                                            @endif
                                         </div>
                                     </div>
 
                                     <div class="rounded-2xl bg-slate-50 p-4">
                                         <div class="text-xs font-medium uppercase tracking-wide text-slate-500">Division</div>
-                                        <div class="mt-2 text-sm font-semibold {{ $matchesDivision ? 'text-emerald-700' : 'text-slate-900' }}">
+                                        <div
+                                            class="mt-2 text-sm font-semibold {{ $matchesDivision ? 'text-emerald-700' : 'text-slate-900' }}">
                                             {{ $matchesDivision ? 'Matched' : 'Not matched' }}
                                         </div>
                                     </div>
 
                                     <div class="rounded-2xl bg-slate-50 p-4">
                                         <div class="text-xs font-medium uppercase tracking-wide text-slate-500">District</div>
-                                        <div class="mt-2 text-sm font-semibold {{ $matchesDistrict ? 'text-emerald-700' : 'text-slate-900' }}">
+                                        <div
+                                            class="mt-2 text-sm font-semibold {{ $matchesDistrict ? 'text-emerald-700' : 'text-slate-900' }}">
                                             {{ $matchesDistrict ? 'Matched' : 'Not matched' }}
                                         </div>
                                     </div>
 
                                     <div class="rounded-2xl bg-slate-50 p-4">
-                                        <div class="text-xs font-medium uppercase tracking-wide text-slate-500">Area Precision</div>
-                                        <div class="mt-2 text-sm font-semibold {{ ($matchesUpazilla || $matchesCityCorporation || $matchesCityArea) ? 'text-emerald-700' : 'text-slate-900' }}">
+                                        <div class="text-xs font-medium uppercase tracking-wide text-slate-500">Area Precision
+                                        </div>
+                                        <div
+                                            class="mt-2 text-sm font-semibold {{ ($matchesUpazilla || $matchesCityCorporation || $matchesCityArea) ? 'text-emerald-700' : 'text-slate-900' }}">
                                             @if ($matchesCityArea)
                                                 City Area matched
                                             @elseif ($matchesCityCorporation)
@@ -202,6 +248,14 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                @if ($isCompatibleButNotExact)
+                                    <div class="mt-4 rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm text-sky-800">
+                                        Your blood group <span class="font-semibold">{{ $currentUser->blood_group }}</span>
+                                        can donate to requested group
+                                        <span class="font-semibold">{{ $bloodRequest->blood_group }}</span>.
+                                    </div>
+                                @endif
                             </div>
                         @endif
 
@@ -212,12 +266,14 @@
                             <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div class="rounded-2xl bg-slate-50 p-4">
                                     <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Patient Name</p>
-                                    <p class="mt-2 text-base font-semibold text-slate-900">{{ $bloodRequest->patient_name }}</p>
+                                    <p class="mt-2 text-base font-semibold text-slate-900">{{ $bloodRequest->patient_name }}
+                                    </p>
                                 </div>
 
                                 <div class="rounded-2xl bg-slate-50 p-4">
                                     <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Blood Group</p>
-                                    <p class="mt-2 text-base font-semibold text-slate-900">{{ $bloodRequest->blood_group }}</p>
+                                    <p class="mt-2 text-base font-semibold text-slate-900">{{ $bloodRequest->blood_group }}
+                                    </p>
                                 </div>
 
                                 <div class="rounded-2xl bg-slate-50 p-4">
@@ -264,7 +320,8 @@
 
                                 @if ($bloodRequest->upazilla)
                                     <div class="rounded-2xl bg-slate-50 p-4">
-                                        <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Upazila / Thana</p>
+                                        <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Upazila / Thana
+                                        </p>
                                         <p class="mt-2 text-base font-semibold text-slate-900">
                                             {{ $bloodRequest->upazilla->name }}
                                         </p>
@@ -273,7 +330,8 @@
 
                                 @if ($bloodRequest->cityCorporation)
                                     <div class="rounded-2xl bg-slate-50 p-4">
-                                        <p class="text-xs font-medium uppercase tracking-wide text-slate-500">City Corporation</p>
+                                        <p class="text-xs font-medium uppercase tracking-wide text-slate-500">City Corporation
+                                        </p>
                                         <p class="mt-2 text-base font-semibold text-slate-900">
                                             {{ $bloodRequest->cityCorporation->name }}
                                         </p>
@@ -368,7 +426,8 @@
 
                                 <div class="flex items-center justify-between text-sm">
                                     <span class="text-slate-500">Emergency</span>
-                                    <span class="font-semibold text-slate-900">{{ $bloodRequest->is_emergency ? 'Yes' : 'No' }}</span>
+                                    <span
+                                        class="font-semibold text-slate-900">{{ $bloodRequest->is_emergency ? 'Yes' : 'No' }}</span>
                                 </div>
 
                                 @if ($bloodRequest->expires_at)

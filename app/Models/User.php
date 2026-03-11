@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 use DivisionByZeroError;
+use App\Support\BloodCompatibility;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -87,5 +88,15 @@ class User extends Authenticatable
     public function cityArea()
     {
         return $this->belongsTo(CityArea::class);
+    }
+
+    public function canDonateTo(?string $recipientBloodGroup): bool
+    {
+        return BloodCompatibility::canDonateTo($this->blood_group, $recipientBloodGroup);
+    }
+
+    public function compatibleRecipientBloodGroups(): array
+    {
+        return BloodCompatibility::compatibleRecipientsFor($this->blood_group);
     }
 }
