@@ -143,6 +143,7 @@ class BloodRequestController extends Controller
             'upazilla',
             'cityCorporation',
             'cityArea',
+            'donorResponses.donor',
         ]);
 
         return view('blood_requests.show', compact('bloodRequest'));

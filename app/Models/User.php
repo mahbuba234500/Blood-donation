@@ -9,6 +9,8 @@ use App\Support\BloodCompatibility;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable
 {
@@ -35,6 +37,7 @@ class User extends Authenticatable
         'role',
         'medical_history',
         'is_blocked',
+        'is_verified'
     ];
 
     /**
@@ -57,8 +60,22 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_blocked' => 'boolean',
+            'is_verified' => 'boolean',
+            'last_login_at' => 'datetime',
         ];
     }
+
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isDonorAvailable()
+    {
+        return (bool) optional($this->donorProfile)->is_available;
+    }
+
 
     public function donorProfile()
     {
@@ -89,7 +106,45 @@ class User extends Authenticatable
     {
         return $this->belongsTo(CityArea::class);
     }
+    public function bloodRequests()
+    {
+        return $this->hasMany(BloodRequest::class, 'requester_user_id');
+    }
 
+    public function bloodRequestsMade(): HasMany
+    {
+        return $this->hasMany(BloodRequest::class, 'requester_user_id');
+    }
+
+    public function bloodRequestResponses(): HasMany
+    {
+        return $this->hasMany(BloodRequestDonor::class, 'donor_user_id');
+    }
+    public function donatedRequests(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            BloodRequest::class,
+            'blood_request_donors',
+            'donor_user_id',
+            'blood_request_id'
+        )->withPivot([
+                    'status',
+                    'responded_at',
+                    'selected_at',
+                    'donated_at',
+                    'rejected_at',
+                    'cancelled_at',
+                    'bags_donated',
+                    'note',
+                    'confirmed_by_user_id',
+                ])->withTimestamps();
+    }
+
+    public function successfulDonations(): HasMany
+    {
+        return $this->hasMany(BloodRequestDonor::class, 'donor_user_id')
+            ->where('status', BloodRequestDonor::STATUS_DONATED);
+    }
     public function canDonateTo(?string $recipientBloodGroup): bool
     {
         return BloodCompatibility::canDonateTo($this->blood_group, $recipientBloodGroup);

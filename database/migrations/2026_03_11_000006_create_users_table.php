@@ -65,6 +65,7 @@ return new class extends Migration {
 
             $table->enum("role", ["user", "admin"])->default("user");
             $table->boolean("is_blocked")->default(false);
+            $table->boolean('is_verified')->default(false);
 
             $table->timestamp("last_login_at")->nullable();
 
@@ -95,7 +96,7 @@ return new class extends Migration {
         });
     }
 
-    
+
     public function down(): void
     {
         Schema::dropIfExists("users");

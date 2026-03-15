@@ -9,9 +9,67 @@ use App\Models\DonorProfile;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
+use App\Models\BloodRequest;
+use App\Models\BloodRequestDonor;
+
 
 class ProfileController extends Controller
 {
+    public function show(Request $request)
+    {
+        $user = $request->user()->load([
+            'division',
+            'district',
+            'upazilla',
+            'cityCorporation',
+            'cityArea',
+            'donorProfile',
+        ]);
+
+        $requestStats = [
+            'total' => $user->bloodRequestsMade()->count(),
+            'pending' => $user->bloodRequestsMade()->where('status', 'pending')->count(),
+            'accepted' => $user->bloodRequestsMade()->where('status', 'accepted')->count(),
+            'completed' => $user->bloodRequestsMade()->where('status', 'completed')->count(),
+            'cancelled' => $user->bloodRequestsMade()->where('status', 'cancelled')->count(),
+            'expired' => $user->bloodRequestsMade()->where('status', 'expired')->count(),
+        ];
+
+        $donationStats = [
+            'responses_total' => $user->bloodRequestResponses()->count(),
+            'interested' => $user->bloodRequestResponses()->where('status', BloodRequestDonor::STATUS_INTERESTED)->count(),
+            'selected' => $user->bloodRequestResponses()->where('status', BloodRequestDonor::STATUS_SELECTED)->count(),
+            'donated' => $user->bloodRequestResponses()->where('status', BloodRequestDonor::STATUS_DONATED)->count(),
+            'rejected' => $user->bloodRequestResponses()->where('status', BloodRequestDonor::STATUS_REJECTED)->count(),
+            'cancelled' => $user->bloodRequestResponses()->where('status', BloodRequestDonor::STATUS_CANCELLED)->count(),
+            'bags_donated' => (int) $user->bloodRequestResponses()
+                ->where('status', BloodRequestDonor::STATUS_DONATED)
+                ->sum('bags_donated'),
+            'last_donated_at' => $user->bloodRequestResponses()
+                ->where('status', BloodRequestDonor::STATUS_DONATED)
+                ->latest('donated_at')
+                ->value('donated_at'),
+        ];
+
+        $recentRequests = $user->bloodRequestsMade()
+            ->latest()
+            ->take(5)
+            ->get();
+
+        $recentDonationActivities = $user->bloodRequestResponses()
+            ->with(['bloodRequest'])
+            ->latest()
+            ->take(5)
+            ->get();
+
+        return view('profile.show', compact(
+            'user',
+            'requestStats',
+            'donationStats',
+            'recentRequests',
+            'recentDonationActivities'
+        ));
+    }
     public function completeForm(Request $request)
     {
         $user = $request->user();
@@ -231,5 +289,16 @@ class ProfileController extends Controller
             'donorProfile',
             'locationMode'
         ));
+    }
+
+    public function blocked()
+    {
+        $user = auth()->user();
+
+        if (!$user || !$user->is_blocked) {
+            return redirect()->route('dashboard');
+        }
+
+        return view('profile.blocked');
     }
 }

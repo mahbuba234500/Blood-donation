@@ -6,7 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class DonorProfile extends Model
 {
-    protected $fillable = ['user_id', 'last_donate_date'];
+    protected $fillable = [
+        'user_id',
+        'is_available',
+        'last_donate_date',
+        'next_eligible_date',
+        'note',
+    ];
 
     protected $casts = [
         'is_available' => 'boolean',

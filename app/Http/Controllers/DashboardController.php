@@ -9,8 +9,11 @@ use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        if ($request->user()->isAdmin()) {
+            return redirect()->route('admin.dashboard');
+        }
         $user = auth()->user();
 
         $profile = $user->donorProfile()->first();

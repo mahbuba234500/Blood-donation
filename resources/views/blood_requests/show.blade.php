@@ -72,22 +72,45 @@
         }
 
         $matchReasons = [];
-        if ($matchesBloodGroup)
+        if ($matchesBloodGroup) {
             $matchReasons[] = $isExactBloodGroupMatch ? 'Exact Blood Group' : 'Compatible Blood Group';
-        if ($matchesDivision)
+        }
+        if ($matchesDivision) {
             $matchReasons[] = 'Division';
-        if ($matchesDistrict)
+        }
+        if ($matchesDistrict) {
             $matchReasons[] = 'District';
-        if ($matchesUpazilla)
+        }
+        if ($matchesUpazilla) {
             $matchReasons[] = 'Upazilla';
-        if ($matchesCityCorporation)
+        }
+        if ($matchesCityCorporation) {
             $matchReasons[] = 'City Corporation';
-        if ($matchesCityArea)
+        }
+        if ($matchesCityArea) {
             $matchReasons[] = 'City Area';
+        }
+
+        $myResponse = auth()->check()
+            ? $bloodRequest->donorResponses->firstWhere('donor_user_id', auth()->id())
+            : null;
+
+        $canRespond = auth()->check()
+            && !$isOwner
+            && $matchesBloodGroup
+            && !in_array($bloodRequest->status, ['completed', 'cancelled', 'expired'], true)
+            && (!$bloodRequest->expires_at || now()->lte($bloodRequest->expires_at));
+
+        $neededBags = $bloodRequest->needed_bags_count ?? ($bloodRequest->quantity_bags ?: 1);
+        $donatedBags = $bloodRequest->donated_bags_count ?? 0;
+        $remainingBags = max(0, $neededBags - $donatedBags);
+
+        $progressPercent = $neededBags > 0
+            ? min(100, (int) round(($donatedBags / $neededBags) * 100))
+            : 0;
     @endphp
 
     <div class="relative min-h-screen bg-slate-50">
-        <!-- Soft background glow -->
         <div class="pointer-events-none fixed inset-0 overflow-hidden">
             <div class="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-red-500/10 blur-3xl"></div>
             <div class="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-red-500/10 blur-3xl"></div>
@@ -95,7 +118,6 @@
 
         <div class="relative py-8 sm:py-10">
             <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-                <!-- Back -->
                 <div class="mb-6">
                     <a href="{{ url()->previous() }}"
                         class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-red-600">
@@ -104,7 +126,6 @@
                     </a>
                 </div>
 
-                <!-- Header Card -->
                 <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
                     <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                         <div>
@@ -174,8 +195,8 @@
 
                             @if ($isOwner)
                                 <div class="mt-4 rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm text-sky-800">
-                                    This is your own blood request. You can review details, contact updates, or manage its
-                                    status from this page.
+                                    This is your own blood request. You can review donor responses, manage donation progress,
+                                    and update the request from this page.
                                 </div>
                             @endif
                         </div>
@@ -190,7 +211,6 @@
                 </div>
 
                 <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
-                    <!-- Main -->
                     <div class="space-y-6 xl:col-span-2">
                         @if (!$isOwner && $matchesBloodGroup)
                             <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -235,7 +255,7 @@
                                         <div class="text-xs font-medium uppercase tracking-wide text-slate-500">Area Precision
                                         </div>
                                         <div
-                                            class="mt-2 text-sm font-semibold {{ ($matchesUpazilla || $matchesCityCorporation || $matchesCityArea) ? 'text-emerald-700' : 'text-slate-900' }}">
+                                            class="mt-2 text-sm font-semibold {{ $matchesUpazilla || $matchesCityCorporation || $matchesCityArea ? 'text-emerald-700' : 'text-slate-900' }}">
                                             @if ($matchesCityArea)
                                                 City Area matched
                                             @elseif ($matchesCityCorporation)
@@ -259,7 +279,6 @@
                             </div>
                         @endif
 
-                        <!-- Request Details -->
                         <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                             <h2 class="text-lg font-semibold text-slate-900">Request Details</h2>
 
@@ -299,7 +318,153 @@
                             </div>
                         </div>
 
-                        <!-- Location -->
+                        @if ($isOwner)
+                            <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <h2 class="text-lg font-semibold text-slate-900">Donor Responses</h2>
+                                        <p class="mt-1 text-sm text-slate-600">
+                                            Review donors, select multiple donors if needed, and record actual donations.
+                                        </p>
+                                    </div>
+
+                                    <div class="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                                        <span class="font-semibold">{{ $donatedBags }}</span> donated /
+                                        <span class="font-semibold">{{ $neededBags }}</span> needed
+                                    </div>
+                                </div>
+
+                                <div class="mt-6 space-y-4">
+                                    @forelse ($bloodRequest->donorResponses as $response)
+                                        <div class="rounded-3xl border border-slate-200 p-5">
+                                            <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                                                <div class="min-w-0">
+                                                    <div class="flex flex-wrap items-center gap-2">
+                                                        <h3 class="text-base font-semibold text-slate-900">
+                                                            {{ $response->donor?->name ?? 'Unknown donor' }}
+                                                        </h3>
+
+                                                        <span
+                                                            class="inline-flex rounded-xl bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                                                            {{ ucfirst($response->status) }}
+                                                        </span>
+
+                                                        @if ($response->donor?->blood_group)
+                                                            <span
+                                                                class="inline-flex rounded-xl bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">
+                                                                {{ $response->donor->blood_group }}
+                                                            </span>
+                                                        @endif
+                                                    </div>
+
+                                                    <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                                        <div class="rounded-2xl bg-slate-50 p-3">
+                                                            <p class="text-xs font-medium uppercase tracking-wide text-slate-500">
+                                                                Phone</p>
+                                                            <p class="mt-1 text-sm font-semibold text-slate-900">
+                                                                {{ $response->donor?->phone ?? 'Not available' }}
+                                                            </p>
+                                                        </div>
+
+                                                        <div class="rounded-2xl bg-slate-50 p-3">
+                                                            <p class="text-xs font-medium uppercase tracking-wide text-slate-500">
+                                                                Responded At</p>
+                                                            <p class="mt-1 text-sm font-semibold text-slate-900">
+                                                                {{ $response->responded_at ? $response->responded_at->format('d M Y, h:i A') : '—' }}
+                                                            </p>
+                                                        </div>
+
+                                                        @if ($response->selected_at)
+                                                            <div class="rounded-2xl bg-emerald-50 p-3">
+                                                                <p class="text-xs font-medium uppercase tracking-wide text-emerald-600">
+                                                                    Selected At</p>
+                                                                <p class="mt-1 text-sm font-semibold text-emerald-800">
+                                                                    {{ $response->selected_at->format('d M Y, h:i A') }}
+                                                                </p>
+                                                            </div>
+                                                        @endif
+
+                                                        @if ($response->donated_at)
+                                                            <div class="rounded-2xl bg-emerald-50 p-3">
+                                                                <p class="text-xs font-medium uppercase tracking-wide text-emerald-600">
+                                                                    Donated At</p>
+                                                                <p class="mt-1 text-sm font-semibold text-emerald-800">
+                                                                    {{ $response->donated_at->format('d M Y, h:i A') }}
+                                                                </p>
+                                                            </div>
+                                                        @endif
+
+                                                        @if ($response->bags_donated)
+                                                            <div class="rounded-2xl bg-emerald-50 p-3">
+                                                                <p class="text-xs font-medium uppercase tracking-wide text-emerald-600">
+                                                                    Bags Donated</p>
+                                                                <p class="mt-1 text-sm font-semibold text-emerald-800">
+                                                                    {{ $response->bags_donated }} bag(s)
+                                                                </p>
+                                                            </div>
+                                                        @endif
+                                                    </div>
+
+                                                    @if ($response->note)
+                                                        <div
+                                                            class="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                                                            {{ $response->note }}
+                                                        </div>
+                                                    @endif
+                                                </div>
+
+                                                @if (!in_array($bloodRequest->status, ['completed', 'cancelled', 'expired'], true))
+                                                    <div class="flex w-full shrink-0 flex-col gap-2 lg:w-44">
+                                                        @if (in_array($response->status, ['interested'], true))
+                                                            <form method="POST"
+                                                                action="{{ route('blood-requests.responses.select', [$bloodRequest, $response]) }}">
+                                                                @csrf
+                                                                <button type="submit"
+                                                                    class="inline-flex w-full items-center justify-center rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700">
+                                                                    Select
+                                                                </button>
+                                                            </form>
+                                                        @endif
+
+                                                        @if (!in_array($response->status, ['donated', 'rejected', 'cancelled'], true))
+                                                            <form method="POST"
+                                                                action="{{ route('blood-requests.responses.donated', [$bloodRequest, $response]) }}">
+                                                                @csrf
+                                                                <input type="hidden" name="bags_donated" value="1">
+                                                                <button type="submit"
+                                                                    class="inline-flex w-full items-center justify-center rounded-2xl bg-red-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700">
+                                                                    Mark Donated
+                                                                </button>
+                                                            </form>
+                                                        @endif
+
+                                                        @if (!in_array($response->status, ['donated', 'rejected'], true))
+                                                            <form method="POST"
+                                                                action="{{ route('blood-requests.responses.reject', [$bloodRequest, $response]) }}">
+                                                                @csrf
+                                                                <button type="submit"
+                                                                    class="inline-flex w-full items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+                                                                    Reject
+                                                                </button>
+                                                            </form>
+                                                        @endif
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @empty
+                                        <div
+                                            class="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
+                                            <p class="text-sm font-medium text-slate-700">No donor responses yet.</p>
+                                            <p class="mt-2 text-sm text-slate-500">
+                                                Interested donors will appear here after they respond.
+                                            </p>
+                                        </div>
+                                    @endforelse
+                                </div>
+                            </div>
+                        @endif
+
                         <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                             <h2 class="text-lg font-semibold text-slate-900">Location</h2>
 
@@ -358,7 +523,6 @@
                             </div>
                         </div>
 
-                        <!-- Notes -->
                         @if ($bloodRequest->note)
                             <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                                 <h2 class="text-lg font-semibold text-slate-900">Additional Note</h2>
@@ -369,9 +533,7 @@
                         @endif
                     </div>
 
-                    <!-- Sidebar -->
                     <div class="space-y-6">
-                        <!-- Contact -->
                         <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                             <h2 class="text-lg font-semibold text-slate-900">Requester Contact</h2>
 
@@ -391,7 +553,7 @@
                                 </div>
                             </div>
 
-                            @if (!$isOwner && $bloodRequest->status === 'pending')
+                            @if (!$isOwner && !in_array($bloodRequest->status, ['completed', 'cancelled', 'expired'], true))
                                 <div class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
                                     <a href="tel:{{ $bloodRequest->requester_phone }}"
                                         class="inline-flex w-full items-center justify-center rounded-2xl bg-red-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700">
@@ -411,7 +573,51 @@
                             @endif
                         </div>
 
-                        <!-- Status -->
+                        <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                            <h2 class="text-lg font-semibold text-slate-900">Donation Progress</h2>
+                            <p class="mt-2 text-sm leading-6 text-slate-600">
+                                Track how much of this request has already been fulfilled.
+                            </p>
+
+                            <div class="mt-5 space-y-4">
+                                <div class="grid grid-cols-3 gap-3">
+                                    <div class="rounded-2xl bg-slate-50 p-4 text-center">
+                                        <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Needed</p>
+                                        <p class="mt-2 text-xl font-bold text-slate-900">{{ $neededBags }}</p>
+                                    </div>
+
+                                    <div class="rounded-2xl bg-emerald-50 p-4 text-center">
+                                        <p class="text-xs font-medium uppercase tracking-wide text-emerald-600">Donated</p>
+                                        <p class="mt-2 text-xl font-bold text-emerald-700">{{ $donatedBags }}</p>
+                                    </div>
+
+                                    <div class="rounded-2xl bg-amber-50 p-4 text-center">
+                                        <p class="text-xs font-medium uppercase tracking-wide text-amber-600">Remaining</p>
+                                        <p class="mt-2 text-xl font-bold text-amber-700">{{ $remainingBags }}</p>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div class="mb-2 flex items-center justify-between text-sm">
+                                        <span class="text-slate-500">Fulfillment</span>
+                                        <span class="font-semibold text-slate-900">{{ $progressPercent }}%</span>
+                                    </div>
+
+                                    <div class="h-3 w-full overflow-hidden rounded-full bg-slate-100">
+                                        <div class="h-full rounded-full bg-red-600 transition-all"
+                                            style="width: {{ $progressPercent }}%"></div>
+                                    </div>
+                                </div>
+
+                                @if ($bloodRequest->status === 'completed')
+                                    <div
+                                        class="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                                        This request has been fulfilled successfully.
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+
                         <div class="rounded-3xl border border-red-100 bg-gradient-to-br from-red-50 to-white p-6 shadow-sm">
                             <h2 class="text-lg font-semibold text-slate-900">Request Status</h2>
                             <p class="mt-2 text-sm leading-6 text-slate-600">
@@ -441,22 +647,61 @@
                             </div>
                         </div>
 
-                        <!-- Owner Actions -->
                         @auth
-                            @if ($isOwner && $bloodRequest->status === 'pending')
+                            @if ($canRespond)
+                                <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                                    <h2 class="text-lg font-semibold text-slate-900">Donor Action</h2>
+
+                                    @if (!$myResponse)
+                                        <p class="mt-2 text-sm leading-6 text-slate-600">
+                                            You match this request. Send your donor response so the requester can review and
+                                            select you.
+                                        </p>
+
+                                        <form method="POST" action="{{ route('blood-requests.respond', $bloodRequest) }}" class="mt-5">
+                                            @csrf
+                                            <button type="submit"
+                                                class="inline-flex w-full items-center justify-center rounded-2xl bg-red-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700">
+                                                I Want to Donate
+                                            </button>
+                                        </form>
+                                    @else
+                                        <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                                            <div class="flex items-center justify-between gap-3">
+                                                <div>
+                                                    <p class="text-sm font-semibold text-slate-900">Your response status</p>
+                                                    <p class="mt-1 text-sm text-slate-600">{{ ucfirst($myResponse->status) }}</p>
+                                                </div>
+
+                                                <span
+                                                    class="rounded-xl bg-white px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
+                                                    {{ ucfirst($myResponse->status) }}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        @if (!in_array($myResponse->status, ['donated', 'cancelled', 'rejected'], true))
+                                            <form method="POST"
+                                                action="{{ route('blood-requests.responses.cancel', [$bloodRequest, $myResponse]) }}"
+                                                class="mt-4">
+                                                @csrf
+                                                <button type="submit"
+                                                    class="inline-flex w-full items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+                                                    Cancel My Response
+                                                </button>
+                                            </form>
+                                        @endif
+                                    @endif
+                                </div>
+                            @endif
+                        @endauth
+
+                        @auth
+                            @if ($isOwner && !in_array($bloodRequest->status, ['completed', 'cancelled', 'expired'], true))
                                 <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                                     <h2 class="text-lg font-semibold text-slate-900">Manage Request</h2>
 
                                     <div class="mt-5 space-y-3">
-                                        <form method="POST" action="{{ route('blood-requests.complete', $bloodRequest) }}">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit"
-                                                class="inline-flex w-full items-center justify-center rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700">
-                                                Mark as Completed
-                                            </button>
-                                        </form>
-
                                         <form method="POST" action="{{ route('blood-requests.cancel', $bloodRequest) }}">
                                             @csrf
                                             @method('PATCH')

@@ -45,6 +45,13 @@
                                         Dashboard
                                     </a>
 
+                                    <a href="{{ route('profile.show') }}" class="rounded-full px-4 py-2 text-sm font-medium transition
+                                            {{ request()->routeIs('profile.show')
+                        ? 'bg-red-50 text-red-700 ring-1 ring-red-100'
+                        : 'text-slate-600 hover:bg-rose-50 hover:text-slate-900' }}">
+                                        Profile
+                                    </a>
+
                                     <a href="{{ route('blood-requests.my') }}" class="rounded-full px-4 py-2 text-sm font-medium transition
                                             {{ request()->routeIs('blood-requests.my')
                         ? 'bg-red-50 text-red-700 ring-1 ring-red-100'
@@ -117,7 +124,7 @@
                                             <div class="min-w-0 flex-1">
                                                 <div class="flex items-center gap-2">
                                                     <p class="truncate text-sm font-medium text-slate-900">
-                                                        {{ $data['message'] ?? 'New notification' }}
+                                                        {{ $data['title'] ?? $data['message'] ?? 'New notification' }}
                                                     </p>
 
                                                     @if ($isUnread)
@@ -126,13 +133,19 @@
                                                 </div>
 
                                                 <p class="mt-1 text-sm text-slate-600">
-                                                    {{ $data['blood_group'] ?? '-' }} needed for
-                                                    {{ $data['patient_name'] ?? 'Unknown patient' }}
+                                                    {{ $data['message'] ?? 'You have a new notification.' }}
                                                 </p>
 
                                                 <p class="mt-1 text-xs text-slate-500">
                                                     {{ $notification->created_at->diffForHumans() }}
                                                 </p>
+
+                                                @if (!empty($data['action_url']))
+                                                    <a href="{{ $data['action_url'] }}"
+                                                        class="mt-2 inline-flex text-xs font-semibold text-red-600 hover:text-red-700">
+                                                        View details
+                                                    </a>
+                                                @endif
                                             </div>
 
                                             @if ($isUnread)
@@ -191,6 +204,10 @@
                         <x-slot name="content">
                             <x-dropdown-link :href="route('dashboard')">
                                 Dashboard
+                            </x-dropdown-link>
+
+                            <x-dropdown-link :href="route('profile.show')">
+                                Profile
                             </x-dropdown-link>
 
                             <x-dropdown-link :href="route('donors.index')">
@@ -277,6 +294,13 @@
                 ? 'bg-red-50 text-red-700'
                 : 'text-slate-700 hover:bg-rose-50' }}">
                         Dashboard
+                    </a>
+
+                    <a href="{{ route('profile.show') }}" class="block rounded-2xl px-4 py-3 text-sm font-medium transition
+                            {{ request()->routeIs('profile.show')
+                ? 'bg-red-50 text-red-700'
+                : 'text-slate-700 hover:bg-rose-50' }}">
+                        Profile
                     </a>
 
                     <a href="{{ route('blood-requests.my') }}" class="block rounded-2xl px-4 py-3 text-sm font-medium transition

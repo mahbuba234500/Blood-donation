@@ -28,6 +28,21 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        $user = $request->user();
+
+        if ($user) {
+            $user->update([
+                'last_login_at' => now(),
+            ]);
+        }
+        if ($user && $user->is_blocked) {
+            return redirect()->route('account.blocked');
+        }
+
+        if ($user && $user->isAdmin()) {
+            return redirect()->intended(route('admin.dashboard', absolute: false));
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

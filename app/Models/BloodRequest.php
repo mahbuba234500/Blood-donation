@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Support\BloodCompatibility;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class BloodRequest extends Model
 {
@@ -36,7 +39,6 @@ class BloodRequest extends Model
         'status',
         'expires_at',
     ];
-    protected $guarded = []; // easiest for MVP
 
 
     protected $casts = [
@@ -111,5 +113,60 @@ class BloodRequest extends Model
         }
 
         return $query->whereIn('blood_group', BloodCompatibility::compatibleRecipientsFor($user->blood_group));
+    }
+
+    public function donorResponses(): HasMany
+    {
+        return $this->hasMany(BloodRequestDonor::class);
+    }
+
+    public function donors(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            User::class,
+            'blood_request_donors',
+            'blood_request_id',
+            'donor_user_id'
+        )->withPivot([
+                    'status',
+                    'responded_at',
+                    'selected_at',
+                    'donated_at',
+                    'rejected_at',
+                    'cancelled_at',
+                    'bags_donated',
+                    'note',
+                    'confirmed_by_user_id',
+                ])->withTimestamps();
+    }
+    public function selectedResponses(): HasMany
+    {
+        return $this->hasMany(BloodRequestDonor::class)
+            ->where('status', BloodRequestDonor::STATUS_SELECTED);
+    }
+
+    public function donatedResponses(): HasMany
+    {
+        return $this->hasMany(BloodRequestDonor::class)
+            ->where('status', BloodRequestDonor::STATUS_DONATED);
+    }
+    public function getNeededBagsCountAttribute(): int
+    {
+        return $this->quantity_bags ?: 1;
+    }
+    public function getDonatedBagsCountAttribute(): int
+    {
+        return (int) $this->donorResponses()
+            ->where('status', BloodRequestDonor::STATUS_DONATED)
+            ->sum('bags_donated');
+    }
+    public function getRemainingBagsCountAttribute(): int
+    {
+        return max(0, $this->needed_bags_count - $this->donated_bags_count);
+    }
+
+    public function isFulfilled(): bool
+    {
+        return $this->donated_bags_count >= $this->needed_bags_count;
     }
 }
